@@ -267,7 +267,7 @@
     const fireBtn = document.getElementById('fireBtn');
     const orientationWarning = document.getElementById('orientation-warning');
     const timeVal = document.getElementById('timeVal');
-    const hitVal.innerText = document.getElementById('hitVal');
+    const hitVal = document.getElementById('hitVal');
     const finalTime = document.getElementById('finalTime');
     const finalHit = document.getElementById('finalHit');
     const shieldVal = document.getElementById('shieldVal');
@@ -570,8 +570,8 @@
       player.hasShield = true;
       player.tripleShotTimer = 0;
 
-      document.getElementById('timeVal').innerText = '0.0';
-      document.getElementById('hitVal').innerText = '0';
+      timeVal.innerText = '0.0';
+      hitVal.innerText = '0';
       shieldVal.innerText = 'ON';
       tripleVal.innerText = '0.0';
 
@@ -613,7 +613,7 @@
 
       // タイム加算
       elapsedTime += dt;
-      document.getElementById('timeVal').innerText = elapsedTime.toFixed(1);
+      timeVal.innerText = elapsedTime.toFixed(1);
 
       // バフタイマーの更新
       if (player.tripleShotTimer > 0) {
@@ -754,7 +754,7 @@
             bullets.splice(i, 1);
             enemies.splice(j, 1);
             hitCount++;
-            document.getElementById('hitVal').innerText = hitCount;
+            hitVal.innerText = hitCount;
             break;
           }
         }
