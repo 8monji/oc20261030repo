@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>霊験！妖怪参道 - 和風シューティング</title>
+  <title>東方風・参道弾幕絵巻</title>
   <style>
     /* =========================================================
        基本スタイル & レスポンシブ設定 (和風アニメテイスト)
@@ -20,7 +20,7 @@
     html, body {
       width: 100%;
       height: 100%;
-      background-color: #0a0414;
+      background-color: #080312;
       color: #fff;
       font-family: 'Hiragino Mincho ProN', 'Yu Mincho', '游明朝', serif;
       overflow: hidden;
@@ -35,7 +35,7 @@
       justify-content: center;
       align-items: center;
       position: relative;
-      background: radial-gradient(circle, #1a0b2e 0%, #05020a 100%);
+      background: radial-gradient(circle, #180829 0%, #030108 100%);
     }
 
     /* 960x540 の固定ゲームワールドコンテナ */
@@ -45,9 +45,9 @@
       position: relative;
       overflow: hidden;
       background-color: #120826;
-      box-shadow: 0 0 40px rgba(255, 75, 92, 0.3), 0 0 80px rgba(18, 8, 38, 0.8);
+      box-shadow: 0 0 50px rgba(255, 75, 92, 0.4), 0 0 100px rgba(18, 8, 38, 0.9);
       border-radius: 12px;
-      border: 2px solid rgba(255, 215, 0, 0.3);
+      border: 2px solid rgba(255, 215, 0, 0.4);
       transform-origin: center center;
     }
 
@@ -87,9 +87,9 @@
       color: #fff;
       text-shadow: 
         0 0 8px #fff,
-        0 0 15px #ff4b5c,
-        0 0 30px #ff4b5c,
-        0 0 50px #ff0055;
+        0 0 18px #ff2a5f,
+        0 0 35px #ff2a5f,
+        0 0 60px #ff0055;
       margin-bottom: 8px;
     }
 
@@ -97,8 +97,8 @@
       font-size: 20px;
       font-weight: bold;
       color: #ffe600;
-      text-shadow: 0 0 10px rgba(255, 230, 0, 0.8), 2px 2px 4px #000;
-      margin-bottom: 35px;
+      text-shadow: 0 0 12px rgba(255, 230, 0, 0.9), 2px 2px 4px #000;
+      margin-bottom: 30px;
     }
 
     /* 和風ネオン風ボタン */
@@ -141,7 +141,7 @@
       right: 25px;
       display: flex;
       justify-content: space-between;
-      font-size: 24px;
+      font-size: 22px;
       font-weight: bold;
       font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
       color: #ffffff;
@@ -150,13 +150,13 @@
     }
 
     .hud-box {
-      background: rgba(18, 8, 38, 0.6);
+      background: rgba(18, 8, 38, 0.7);
       padding: 6px 18px;
       border-radius: 20px;
       border: 1px solid rgba(255, 230, 0, 0.5);
     }
 
-    /* 右下 FIRE ボタン (霊符・神社風) */
+    /* 右下 FIRE ボタン (祓霊符風) */
     #fire-btn {
       position: absolute;
       bottom: 25px;
@@ -192,13 +192,13 @@
       font-size: 14px;
       font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
       color: #d1c4e9;
-      margin-top: 20px;
+      margin-top: 15px;
       text-align: center;
       line-height: 1.7;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.5);
       padding: 10px 20px;
       border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
     /* 縦画面警告オーバーレイ */
@@ -259,8 +259,8 @@
 
       <!-- タイトル画面 UI -->
       <div id="ui-title" class="ui-layer">
-        <h1 class="shrine-title" id="title-text">霊験！妖怪参道</h1>
-        <p class="shrine-subtitle" id="subtitle-text">〜 神社の参道を進む和風シューティング 〜</p>
+        <h1 class="shrine-title" id="title-text">東方風・参道弾幕絵巻</h1>
+        <p class="shrine-subtitle" id="subtitle-text">〜 絢爛たる妖弾を避け祓え！本格和風弾幕戦 〜</p>
         
         <button id="start-btn" class="btn interactive">参拝開始 (PLAY)</button>
         <button id="fullscreen-btn" class="btn btn-secondary interactive">FULL SCREEN</button>
@@ -268,13 +268,14 @@
         <div class="controls-hint">
           【操作方法】<br>
           自機移動：上下ドラッグ / 指でスライド / 矢印キー / [W][S]<br>
-          破魔弾発射：画面タップ / [祓霊]ボタン / [SPACE]キー
+          破魔弾発射：画面タップ / [祓霊]ボタン / [SPACE]キー<br>
+          <span style="color: #ffe600;">※自機中心の赤い点（判定）に弾が当たると判定されます</span>
         </div>
       </div>
 
       <!-- ゲームオーバー画面 UI -->
       <div id="ui-gameover" class="ui-layer" style="display: none;">
-        <h1 class="shrine-title" style="color: #ff4b5c; text-shadow: 0 0 25px #ff0055;">妖気無念...</h1>
+        <h1 class="shrine-title" style="color: #ff4b5c; text-shadow: 0 0 25px #ff0055;">妖弾被弾...</h1>
         <p style="font-size: 24px; margin-bottom: 10px; color: #fff;">妖怪撃破数 (HIT): <span id="final-score" style="color: #ffe600; font-weight: bold;">0</span> 匹</p>
         <p style="font-size: 24px; margin-bottom: 30px; color: #fff;">生存時間 (TIME): <span id="final-time" style="color: #ff4b5c; font-weight: bold;">0.0</span> 秒</p>
         <button id="retry-btn" class="btn interactive">再挑戦 (RETRY)</button>
@@ -285,36 +286,38 @@
 
   <script>
     /* =========================================================
-       ★ 体験授業用 CONFIG オブジェクト ★
-       ここを書き換えることでゲームの難易度やデザインをカスタマイズ！
+       ★ 体験授業用 CONFIG オブジェクト (弾幕カスタマイズ) ★
        ========================================================= */
     const CONFIG = {
       // --- 基本テキスト ---
-      TITLE: '霊験！妖怪参道',
-      SUBTITLE: '〜 神社の参道を進む和風シューティング 〜',
+      TITLE: '東方風・参道弾幕絵巻',
+      SUBTITLE: '〜 絢爛たる妖弾を避け祓え！本格和風弾幕戦 〜',
 
       // --- テーマカラー ---
       BG_COLOR: '#120826',        // 夜の参道・背景ベース色
       PLAYER_COLOR: '#ff4b5c',    // 自機（式神のお札・朱色）
       ENEMY_COLOR: '#00f0ff',     // 敵（鬼火・青緑の妖火）
-      BULLET_COLOR: '#ffe600',    // 破魔弾（輝く黄色）
+      BULLET_COLOR: '#ffe600',    // 自機破魔弾（輝く黄色）
 
-      // --- ゲームバランス設定 ---
-      ENEMY_SPEED: 3.5,           // 敵（鬼火）の移動スピード
-      SPAWN_INTERVAL: 850,        // 敵の出現間隔 (ミリ秒)
-      BULLET_SPEED: 12,           // 破魔弾の飛行速度
-      FOLLOW_SPEED: 0.18          // 自機の指/キー追従速度 (0.05〜1.0)
+      // --- 弾幕・難易度設定 ---
+      ENEMY_SPEED: 2.2,           // 敵の出現移動スピード
+      SPAWN_INTERVAL: 1400,       // 敵の出現間隔 (ミリ秒)
+      BULLET_SPEED: 14,           // 自機破魔弾の飛行速度
+      FOLLOW_SPEED: 0.22,         // 自機の指/キー追従速度
+      
+      // 敵弾幕設定
+      ENEMY_BULLET_SPEED: 3.2,    // 敵弾の飛行速度
+      ENEMY_SHOOT_INTERVAL: 45,   // 敵の発射クールダウン(フレーム数)
+      BULLET_HELL_MODE: 1.0       // 弾幕密度係数
     };
 
     /* =========================================================
-       ゲームエンジン & グラフィックス
+       ゲームエンジン & システム変数
        ========================================================= */
 
-    // 仮想固定解像度 (16:9)
     const GAME_WIDTH = 960;
     const GAME_HEIGHT = 540;
 
-    // DOM要素の参照
     const container = document.getElementById('game-container');
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -328,19 +331,28 @@
     const finalScore = document.getElementById('final-score');
     const finalTime = document.getElementById('final-time');
 
-    // システム状態
+    // ゲーム状態
     let gameState = 'TITLE'; // 'TITLE', 'PLAYING', 'GAMEOVER'
     let currentScale = 1;
     let score = 0;
     let startTime = 0;
     let elapsedTime = 0;
-    let lastTime = 0;
     let lastSpawnTime = 0;
     let isPaused = false;
+    let frameCount = 0;
 
-    // オブジェクト管理
-    let player = { x: 120, y: 270, targetY: 270, radius: 22 };
-    let bullets = [];
+    // 自機（喰らい判定は半径 5px と極小にして避けやすくする）
+    let player = { 
+      x: 120, 
+      y: 270, 
+      targetY: 270, 
+      visualRadius: 22,
+      hitRadius: 5 // 弾幕ゲー特有の極小判定
+    };
+
+    // 配列管理
+    let playerBullets = [];
+    let enemyBullets = [];
     let enemies = [];
     let particles = [];
     let petals = [];
@@ -352,7 +364,6 @@
     let fireCooldown = 0;
     let keys = {};
 
-    // CONFIG初期テキスト反映
     document.getElementById('title-text').textContent = CONFIG.TITLE;
     document.getElementById('subtitle-text').textContent = CONFIG.SUBTITLE;
 
@@ -363,12 +374,10 @@
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
 
-      // 縦画面チェック
       const isPortrait = windowHeight > windowWidth;
       document.getElementById('portrait-warning').style.display = isPortrait ? 'flex' : 'none';
       isPaused = isPortrait;
 
-      // 16:9 拡大縮小スケール計算
       const scaleX = windowWidth / GAME_WIDTH;
       const scaleY = windowHeight / GAME_HEIGHT;
       currentScale = Math.min(scaleX, scaleY);
@@ -380,7 +389,6 @@
     window.addEventListener('orientationchange', fitScreen);
     fitScreen();
 
-    // 画面タップ・ドラッグ座標をゲームの 960x540 座標へ変換
     function getGameCoordinates(clientX, clientY) {
       const rect = canvas.getBoundingClientRect();
       return {
@@ -390,12 +398,11 @@
     }
 
     /* ---------------------------------------------------------
-       2. 背景描画 (アニメ調の夕刻〜夜空、満月、五重塔、参道、千本鳥居、石灯籠)
+       2. 背景描画 (アニメ調・参道・神社・舞い散る桜)
        --------------------------------------------------------- */
     function initBackgroundElements() {
-      // 桜の花びらパーティクル初期化
       petals = [];
-      for (let i = 0; i < 45; i++) {
+      for (let i = 0; i < 50; i++) {
         petals.push({
           x: Math.random() * GAME_WIDTH,
           y: Math.random() * GAME_HEIGHT,
@@ -407,38 +414,36 @@
         });
       }
 
-      // 千本鳥居初期化
       toriiGates = [];
       for (let i = 0; i < 5; i++) {
         toriiGates.push({ x: 200 + i * 220 });
       }
 
-      // 石灯籠初期化
       lanterns = [];
       for (let i = 0; i < 7; i++) {
         lanterns.push({ x: 100 + i * 160 });
       }
     }
 
-    function drawBackground(dt) {
-      // A. 夜空のアニメ調グラデーション (グラデーション: 深紫〜朱赤〜宵闇)
+    function drawBackground() {
+      // 空のグラデーション
       const skyGradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
-      skyGradient.addColorStop(0.0, '#0d051d');
-      skyGradient.addColorStop(0.4, '#260e38');
-      skyGradient.addColorStop(0.7, '#591838');
-      skyGradient.addColorStop(0.88, '#9e3243');
+      skyGradient.addColorStop(0.0, '#0a0318');
+      skyGradient.addColorStop(0.4, '#240a35');
+      skyGradient.addColorStop(0.7, '#571336');
+      skyGradient.addColorStop(0.88, '#9c2f42');
       skyGradient.addColorStop(1.0, '#120826');
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-      // B. 幻想的な満月
+      // 満月
       ctx.save();
       const moonX = 780;
       const moonY = 110;
       const moonGlow = ctx.createRadialGradient(moonX, moonY, 15, moonX, moonY, 110);
       moonGlow.addColorStop(0, 'rgba(255, 255, 220, 0.9)');
-      moonGlow.addColorStop(0.3, 'rgba(255, 220, 150, 0.4)');
-      moonGlow.addColorStop(1, 'rgba(255, 200, 100, 0)');
+      moonGlow.addColorStop(0.3, 'rgba(255, 200, 140, 0.4)');
+      moonGlow.addColorStop(1, 'rgba(255, 180, 100, 0)');
       ctx.fillStyle = moonGlow;
       ctx.beginPath();
       ctx.arc(moonX, moonY, 110, 0, Math.PI * 2);
@@ -450,9 +455,9 @@
       ctx.fill();
       ctx.restore();
 
-      // C. 遠景の山々のシルエット
+      // 遠景の山脈＆五重塔
       ctx.save();
-      ctx.fillStyle = '#1a0a2a';
+      ctx.fillStyle = '#180828';
       ctx.beginPath();
       ctx.moveTo(0, 420);
       ctx.quadraticCurveTo(180, 330, 360, 390);
@@ -463,17 +468,14 @@
       ctx.closePath();
       ctx.fill();
 
-      // 五重塔のシルエット (右奥の山の上)
       const pagX = 700;
       const pagY = 325;
-      ctx.fillStyle = '#12051f';
-      // 塔の本体と層
+      ctx.fillStyle = '#10041d';
       for (let i = 0; i < 5; i++) {
         const w = 36 - i * 5;
         const h = 12;
         const y = pagY - i * 16;
         ctx.fillRect(pagX - w / 2, y, w, h);
-        // 屋根のひさし
         ctx.beginPath();
         ctx.moveTo(pagX - w / 2 - 8, y + 2);
         ctx.lineTo(pagX + w / 2 + 8, y + 2);
@@ -481,25 +483,23 @@
         ctx.closePath();
         ctx.fill();
       }
-      // 相輪 (相輪・相輪の先端)
       ctx.fillRect(pagX - 2, pagY - 88, 4, 18);
       ctx.restore();
 
-      // D. 参道（地面）の描画
+      // 参道床
       const groundY = 460;
-      ctx.fillStyle = '#1d0f33';
+      ctx.fillStyle = '#1c0e31';
       ctx.fillRect(0, groundY, GAME_WIDTH, GAME_HEIGHT - groundY);
 
-      // 石畳のライン
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.15)';
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.18)';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(0, groundY);
       ctx.lineTo(GAME_WIDTH, groundY);
       ctx.stroke();
 
-      // E. 流れる千本鳥居 (右から左へスクロール)
-      const speed = (gameState === 'PLAYING' && !isPaused) ? 2.0 : 0.5;
+      // 鳥居
+      const speed = (gameState === 'PLAYING' && !isPaused) ? 1.8 : 0.4;
       toriiGates.forEach(gate => {
         if (gameState === 'PLAYING' && !isPaused) {
           gate.x -= speed;
@@ -508,31 +508,22 @@
 
         ctx.save();
         ctx.translate(gate.x, groundY);
-
-        // 柱（朱色）
         ctx.fillStyle = '#c92a2a';
         ctx.shadowBlur = 10;
         ctx.shadowColor = '#ff4b5c';
         ctx.fillRect(-28, -130, 8, 130);
         ctx.fillRect(20, -130, 8, 130);
-
-        // 貫（ヌキ・下の横木）
         ctx.fillRect(-34, -100, 68, 7);
-
-        // 笠木・島木（カサギ・上の黒い横木）
         ctx.fillStyle = '#1a1a1a';
         ctx.fillRect(-38, -138, 76, 10);
         ctx.fillStyle = '#d62828';
         ctx.fillRect(-35, -132, 70, 6);
-
-        // 額束（ガクヅカ・中央の額）
         ctx.fillStyle = '#111';
         ctx.fillRect(-4, -130, 8, 22);
-
         ctx.restore();
       });
 
-      // F. 流れる石灯籠 (参道に沿って光る)
+      // 石灯籠
       lanterns.forEach(lan => {
         if (gameState === 'PLAYING' && !isPaused) {
           lan.x -= speed * 1.2;
@@ -541,20 +532,14 @@
 
         ctx.save();
         ctx.translate(lan.x, groundY + 10);
-
-        // 土台・竿
-        ctx.fillStyle = '#2b2638';
+        ctx.fillStyle = '#292336';
         ctx.fillRect(-8, -25, 16, 25);
         ctx.fillRect(-12, -30, 24, 6);
-
-        // 火袋 (あたたかいあかり)
         ctx.fillStyle = '#ffe600';
         ctx.shadowBlur = 15;
         ctx.shadowColor = '#ffe600';
         ctx.fillRect(-7, -42, 14, 12);
-
-        // 笠・宝珠
-        ctx.fillStyle = '#1c1826';
+        ctx.fillStyle = '#1a1624';
         ctx.shadowBlur = 0;
         ctx.beginPath();
         ctx.moveTo(-16, -42);
@@ -562,11 +547,10 @@
         ctx.lineTo(0, -52);
         ctx.closePath();
         ctx.fill();
-
         ctx.restore();
       });
 
-      // G. 舞い散る桜の花びら
+      // 舞い散る桜
       petals.forEach(p => {
         if (gameState === 'PLAYING' && !isPaused) {
           p.x += p.speedX;
@@ -583,24 +567,21 @@
         ctx.fillStyle = '#ffb7c5';
         ctx.shadowBlur = 8;
         ctx.shadowColor = '#ff4b5c';
-        
-        // 花びら形状パス
         ctx.beginPath();
         ctx.moveTo(0, -p.size);
         ctx.quadraticCurveTo(p.size, -p.size / 2, p.size / 2, p.size);
         ctx.quadraticCurveTo(0, p.size / 2, -p.size / 2, p.size);
         ctx.quadraticCurveTo(-p.size, -p.size / 2, 0, -p.size);
         ctx.fill();
-
         ctx.restore();
       });
     }
 
     /* ---------------------------------------------------------
-       3. パーティクル (爆発・破霊エフェクト)
+       3. パーティクル (爆発・消滅)
        --------------------------------------------------------- */
-    function createExplosion(x, y, color) {
-      for (let i = 0; i < 22; i++) {
+    function createExplosion(x, y, color, count = 22) {
+      for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = Math.random() * 7 + 2;
         particles.push({
@@ -640,15 +621,13 @@
     }
 
     /* ---------------------------------------------------------
-       4. 入力イベント制御 (タッチ・マウス・キーボード)
+       4. 入力ハンドラー
        --------------------------------------------------------- */
     function handlePointerMove(e) {
       if (gameState !== 'PLAYING' || isPaused) return;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       const coords = getGameCoordinates(clientX, clientY);
-      
-      // 目標Y座標更新
       player.targetY = Math.max(35, Math.min(GAME_HEIGHT - 35, coords.y));
     }
 
@@ -662,7 +641,7 @@
       if (gameState !== 'PLAYING' || isPaused) return;
       if (e.target !== fireBtn) {
         handlePointerMove(e);
-        shootBullet();
+        shootPlayerBullet();
       }
     }
 
@@ -671,20 +650,18 @@
       handlePointerDown(e);
     }, { passive: false });
 
-    // FIREボタンイベント
     fireBtn.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
       isFiring = true;
-      shootBullet();
+      shootPlayerBullet();
     });
     fireBtn.addEventListener('pointerup', () => { isFiring = false; });
     fireBtn.addEventListener('pointerleave', () => { isFiring = false; });
 
-    // キーボード操作
     window.addEventListener('keydown', (e) => {
       keys[e.code] = true;
       if (e.code === 'Space' && gameState === 'PLAYING') {
-        shootBullet();
+        shootPlayerBullet();
       }
     });
 
@@ -692,21 +669,115 @@
       keys[e.code] = false;
     });
 
-    // 破魔弾の発射
-    function shootBullet() {
+    function shootPlayerBullet() {
       if (fireCooldown <= 0) {
-        bullets.push({
-          x: player.x + 30,
-          y: player.y,
-          radius: 7,
-          speed: CONFIG.BULLET_SPEED
-        });
-        fireCooldown = 9; // 連射間隔
+        // 自機ショット：メイン弾2発＋上下拡散
+        playerBullets.push({ x: player.x + 25, y: player.y - 8, vx: CONFIG.BULLET_SPEED, vy: 0, radius: 6 });
+        playerBullets.push({ x: player.x + 25, y: player.y + 8, vx: CONFIG.BULLET_SPEED, vy: 0, radius: 6 });
+        playerBullets.push({ x: player.x + 20, y: player.y - 12, vx: CONFIG.BULLET_SPEED * 0.9, vy: -1.8, radius: 5 });
+        playerBullets.push({ x: player.x + 20, y: player.y + 12, vx: CONFIG.BULLET_SPEED * 0.9, vy: 1.8, radius: 5 });
+        
+        fireCooldown = 7; // 連射間隔
       }
     }
 
     /* ---------------------------------------------------------
-       5. ゲームコアロジック (更新・当たり判定・湧き制御)
+       5. 弾幕生成ロジック (多種多様な高密度妖弾)
+       --------------------------------------------------------- */
+    function spawnEnemyBulletPattern(enemy) {
+      const spd = CONFIG.ENEMY_BULLET_SPEED;
+      const ex = enemy.x;
+      const ey = enemy.y + Math.sin(enemy.floatOffset) * 12;
+
+      // 弾幕パターン種別 (敵の種類ごとに決定)
+      switch (enemy.patternType) {
+        case 0: {
+          // ★ パターン1: 扇状5WAY〜7WAY 弾幕
+          const wayCount = 7;
+          const spreadAngle = Math.PI / 3.5; // 広がり角
+          const baseAngle = Math.atan2(player.y - ey, player.x - ex); // 自機方向
+
+          for (let i = 0; i < wayCount; i++) {
+            const angle = baseAngle - spreadAngle / 2 + (spreadAngle / (wayCount - 1)) * i;
+            enemyBullets.push({
+              x: ex,
+              y: ey,
+              vx: Math.cos(angle) * spd,
+              vy: Math.sin(angle) * spd,
+              radius: 6,
+              color: '#ff2a5f',
+              glow: '#ff0055'
+            });
+          }
+          break;
+        }
+
+        case 1: {
+          // ★ パターン2: 全方位12連サークルリング弾
+          const ringCount = 12;
+          for (let i = 0; i < ringCount; i++) {
+            const angle = (Math.PI * 2 / ringCount) * i + (enemy.shootCount * 0.2);
+            enemyBullets.push({
+              x: ex,
+              y: ey,
+              vx: Math.cos(angle) * (spd * 0.85),
+              vy: Math.sin(angle) * (spd * 0.85),
+              radius: 5,
+              color: '#00f0ff',
+              glow: '#00aaff'
+            });
+          }
+          break;
+        }
+
+        case 2: {
+          // ★ パターン3: 旋回スパイラル螺旋弾幕 (高頻度連写)
+          const angle = (enemy.shootCount * 0.35);
+          enemyBullets.push({
+            x: ex,
+            y: ey,
+            vx: Math.cos(angle) * spd * 1.1,
+            vy: Math.sin(angle) * spd * 1.1,
+            radius: 7,
+            color: '#ffe600',
+            glow: '#ff9900'
+          });
+          enemyBullets.push({
+            x: ex,
+            y: ey,
+            vx: Math.cos(angle + Math.PI) * spd * 1.1,
+            vy: Math.sin(angle + Math.PI) * spd * 1.1,
+            radius: 7,
+            color: '#ffe600',
+            glow: '#ff9900'
+          });
+          break;
+        }
+
+        case 3: {
+          // ★ パターン4: 3連高速自機狙い狙撃弾
+          const baseAngle = Math.atan2(player.y - ey, player.x - ex);
+          for (let i = -1; i <= 1; i++) {
+            const angle = baseAngle + (i * 0.12);
+            enemyBullets.push({
+              x: ex,
+              y: ey,
+              vx: Math.cos(angle) * (spd * 1.3),
+              vy: Math.sin(angle) * (spd * 1.3),
+              radius: 8,
+              color: '#a000ff',
+              glow: '#d000ff'
+            });
+          }
+          break;
+        }
+      }
+
+      enemy.shootCount++;
+    }
+
+    /* ---------------------------------------------------------
+       6. ゲーム更新 ＆ 当たり判定
        --------------------------------------------------------- */
     function resetGame() {
       score = 0;
@@ -714,12 +785,14 @@
       lastSpawnTime = Date.now();
       elapsedTime = 0;
       fireCooldown = 0;
+      frameCount = 0;
 
       player.x = 120;
       player.y = GAME_HEIGHT / 2;
       player.targetY = GAME_HEIGHT / 2;
 
-      bullets = [];
+      playerBullets = [];
+      enemyBullets = [];
       enemies = [];
       particles = [];
 
@@ -747,143 +820,170 @@
     }
 
     function spawnEnemy() {
-      const radius = Math.random() * 8 + 18; // 鬼火のサイズ
+      const radius = Math.random() * 8 + 20;
       enemies.push({
         x: GAME_WIDTH + radius + 20,
-        y: Math.random() * (GAME_HEIGHT - 120) + 40,
+        y: Math.random() * (GAME_HEIGHT - 140) + 50,
         radius: radius,
-        speed: CONFIG.ENEMY_SPEED + (Math.random() * 1.5 - 0.5),
+        speed: CONFIG.ENEMY_SPEED + (Math.random() * 1.0 - 0.3),
         floatOffset: Math.random() * Math.PI * 2,
-        floatSpeed: Math.random() * 0.05 + 0.03
+        floatSpeed: Math.random() * 0.05 + 0.03,
+        patternType: Math.floor(Math.random() * 4), // 弾幕パターンの決定
+        shootTimer: Math.floor(Math.random() * 20),
+        shootCount: 0,
+        hp: 3 // 少し硬くして弾幕を出させる
       });
     }
 
-    function update(now) {
+    function update() {
       if (gameState !== 'PLAYING' || isPaused) return;
 
-      // 生存時間更新
+      frameCount++;
       elapsedTime = (Date.now() - startTime) / 1000;
       timeVal.textContent = elapsedTime.toFixed(1);
 
-      // キーボードによる上下移動
+      // キーボード移動
       const kbSpeed = 8;
       if (keys['ArrowUp'] || keys['KeyW']) player.targetY -= kbSpeed;
       if (keys['ArrowDown'] || keys['KeyS']) player.targetY += kbSpeed;
       player.targetY = Math.max(35, Math.min(GAME_HEIGHT - 35, player.targetY));
 
-      // 自機のスムーズ移動 (FOLLOW_SPEED)
+      // 自機スムーズ移動
       player.y += (player.targetY - player.y) * CONFIG.FOLLOW_SPEED;
 
-      // 弾連射処理
+      // 自機連射
       if (fireCooldown > 0) fireCooldown--;
       if ((isFiring || keys['Space']) && fireCooldown <= 0) {
-        shootBullet();
+        shootPlayerBullet();
       }
 
-      // 弾の更新
-      for (let i = bullets.length - 1; i >= 0; i--) {
-        const b = bullets[i];
-        b.x += b.speed;
-        if (b.x > GAME_WIDTH + 30) {
-          bullets.splice(i, 1);
+      // 1. 自機弾の更新
+      for (let i = playerBullets.length - 1; i >= 0; i--) {
+        const b = playerBullets[i];
+        b.x += b.vx;
+        b.y += b.vy;
+        if (b.x > GAME_WIDTH + 30 || b.y < -20 || b.y > GAME_HEIGHT + 20) {
+          playerBullets.splice(i, 1);
         }
       }
 
-      // 敵（鬼火）の定期出現
+      // 2. 敵の出現管理
       if (Date.now() - lastSpawnTime > CONFIG.SPAWN_INTERVAL) {
         spawnEnemy();
         lastSpawnTime = Date.now();
       }
 
-      // 敵の更新 & 当たり判定
+      // 3. 敵（妖怪）の動作 ＆ 弾幕発射処理
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         e.x -= e.speed;
         e.floatOffset += e.floatSpeed;
-        const currentY = e.y + Math.sin(e.floatOffset) * 12; // ゆらゆら揺れる動き
+        const currentY = e.y + Math.sin(e.floatOffset) * 12;
 
-        // 画面外退場
-        if (e.x < -e.radius - 30) {
+        // 画面内での弾幕発射カウントダウン
+        if (e.x < GAME_WIDTH - 20 && e.x > 80) {
+          e.shootTimer++;
+          
+          // 弾幕発射頻度 (CONFIGのENEMY_SHOOT_INTERVAL)
+          const interval = (e.patternType === 2) ? 12 : CONFIG.ENEMY_SHOOT_INTERVAL;
+          if (e.shootTimer >= interval) {
+            spawnEnemyBulletPattern(e);
+            e.shootTimer = 0;
+          }
+        }
+
+        // 画面外脱出
+        if (e.x < -e.radius - 40) {
           enemies.splice(i, 1);
           continue;
         }
 
-        // 自機との衝突判定 (式神 vs 鬼火)
+        // 自機と敵本体の直接衝突判定
         const distToPlayer = Math.hypot(e.x - player.x, currentY - player.y);
-        if (distToPlayer < e.radius + player.radius - 4) {
-          createExplosion(player.x, player.y, CONFIG.PLAYER_COLOR);
-          createExplosion(e.x, currentY, CONFIG.ENEMY_COLOR);
+        if (distToPlayer < e.radius + player.hitRadius) {
+          createExplosion(player.x, player.y, CONFIG.PLAYER_COLOR, 35);
+          createExplosion(e.x, currentY, CONFIG.ENEMY_COLOR, 35);
           gameOver();
           return;
         }
 
-        // 弾との衝突判定
-        for (let j = bullets.length - 1; j >= 0; j--) {
-          const b = bullets[j];
-          const distToBullet = Math.hypot(e.x - b.x, currentY - b.y);
+        // 自機弾 vs 敵の衝突判定
+        for (let j = playerBullets.length - 1; j >= 0; j--) {
+          const pb = playerBullets[j];
+          const distToBullet = Math.hypot(e.x - pb.x, currentY - pb.y);
 
-          if (distToBullet < e.radius + b.radius) {
-            // 撃破エフェクト
-            createExplosion(e.x, currentY, CONFIG.ENEMY_COLOR);
-            createExplosion(e.x, currentY, '#ffe600'); // 金色の光散乱
+          if (distToBullet < e.radius + pb.radius) {
+            createExplosion(pb.x, pb.y, '#ffe600', 6);
+            playerBullets.splice(j, 1);
             
-            enemies.splice(i, 1);
-            bullets.splice(j, 1);
-
-            score++;
-            scoreVal.textContent = score;
-            break;
+            e.hp--;
+            if (e.hp <= 0) {
+              createExplosion(e.x, currentY, CONFIG.ENEMY_COLOR, 30);
+              createExplosion(e.x, currentY, '#ffe600', 15);
+              enemies.splice(i, 1);
+              score++;
+              scoreVal.textContent = score;
+              break;
+            }
           }
+        }
+      }
+
+      // 4. 敵弾（弾幕）の更新 ＆ 自機との当たり判定
+      for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const eb = enemyBullets[i];
+        eb.x += eb.vx;
+        eb.y += eb.vy;
+
+        // 画面外消去
+        if (eb.x < -30 || eb.x > GAME_WIDTH + 30 || eb.y < -30 || eb.y > GAME_HEIGHT + 30) {
+          enemyBullets.splice(i, 1);
+          continue;
+        }
+
+        // ★ 弾幕判定: 敵弾 vs 自機判定点 (player.hitRadius) ★
+        const dist = Math.hypot(eb.x - player.x, eb.y - player.y);
+        if (dist < eb.radius + player.hitRadius) {
+          // 被弾・爆発・ゲームオーバー
+          createExplosion(player.x, player.y, '#ff0055', 40);
+          createExplosion(player.x, player.y, '#ffe600', 25);
+          gameOver();
+          return;
         }
       }
     }
 
     /* ---------------------------------------------------------
-       6. アニメ調オブジェクト描画 (自機:式神, 敵:鬼火, 弾:破魔弾)
+       7. 描画処理 (弾幕・自機・判定表示)
        --------------------------------------------------------- */
     function draw() {
-      // 背景描画
       drawBackground();
-
-      // パーティクル描画
       updateAndDrawParticles();
 
       if (gameState === 'PLAYING' || gameState === 'GAMEOVER') {
         
-        // A. 破魔弾 (光る霊弾＋花弁トレイル)
-        bullets.forEach(b => {
+        // A. 自機ショット描画
+        playerBullets.forEach(b => {
           ctx.save();
-          ctx.shadowBlur = 15;
+          ctx.shadowBlur = 12;
           ctx.shadowColor = CONFIG.BULLET_COLOR;
           ctx.fillStyle = CONFIG.BULLET_COLOR;
-          
-          // 弾本体
           ctx.beginPath();
           ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
           ctx.fill();
-
-          // 尾を引く光跡
-          const grad = ctx.createLinearGradient(b.x, b.y, b.x - 25, b.y);
-          grad.addColorStop(0, CONFIG.BULLET_COLOR);
-          grad.addColorStop(1, 'rgba(255, 75, 92, 0)');
-          ctx.fillStyle = grad;
-          ctx.fillRect(b.x - 25, b.y - 3, 25, 6);
-
           ctx.restore();
         });
 
-        // B. 敵：揺らめく「鬼火（妖火）」
+        // B. 敵（鬼火・妖魔）描画
         enemies.forEach(e => {
           const currentY = e.y + Math.sin(e.floatOffset) * 12;
 
           ctx.save();
           ctx.translate(e.x, currentY);
 
-          // 妖光 (Glow)
-          ctx.shadowBlur = 20;
+          ctx.shadowBlur = 22;
           ctx.shadowColor = CONFIG.ENEMY_COLOR;
 
-          // 外枠の炎 (青緑のグラデーション)
           const flameGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, e.radius);
           flameGrad.addColorStop(0, '#ffffff');
           flameGrad.addColorStop(0.4, CONFIG.ENEMY_COLOR);
@@ -894,7 +994,7 @@
           ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
           ctx.fill();
 
-          // 揺らめく鬼火のメラメラした尾
+          // 妖火のメラメラした尾
           ctx.fillStyle = CONFIG.ENEMY_COLOR;
           ctx.beginPath();
           ctx.moveTo(0, -e.radius * 0.7);
@@ -902,26 +1002,42 @@
           ctx.quadraticCurveTo(0, e.radius * 0.3, 0, -e.radius * 0.7);
           ctx.fill();
 
-          // 中心の妖しい核
+          ctx.restore();
+        });
+
+        // C. 敵弾幕（高輝度ネオン妖弾）描画
+        enemyBullets.forEach(eb => {
+          ctx.save();
+          ctx.translate(eb.x, eb.y);
+
+          ctx.shadowBlur = 14;
+          ctx.shadowColor = eb.glow || '#ff0055';
+
+          // 弾の外枠・オーラ
+          ctx.fillStyle = eb.color || '#ff2a5f';
+          ctx.beginPath();
+          ctx.arc(0, 0, eb.radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 弾の中心（白く光る核）
           ctx.fillStyle = '#ffffff';
           ctx.beginPath();
-          ctx.arc(-2, 0, 5, 0, Math.PI * 2);
+          ctx.arc(0, 0, eb.radius * 0.45, 0, Math.PI * 2);
           ctx.fill();
 
           ctx.restore();
         });
 
-        // C. 自機：「式神（お札・霊符）」＆ 霊光
+        // D. 自機（式神・お札）＆ 喰らい判定表示
         if (gameState === 'PLAYING') {
           ctx.save();
           ctx.translate(player.x, player.y);
 
-          // 式神の背後の光環 (オーラ)
+          // 式神の霊力オーラ
           ctx.shadowBlur = 18;
           ctx.shadowColor = CONFIG.PLAYER_COLOR;
           
-          // 後方の霊力の尾
-          const tailGrad = ctx.createLinearGradient(0, 0, -40, 0);
+          const tailGrad = ctx.createLinearGradient(0, 0, -45, 0);
           tailGrad.addColorStop(0, CONFIG.PLAYER_COLOR);
           tailGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
           ctx.fillStyle = tailGrad;
@@ -932,57 +1048,58 @@
           ctx.closePath();
           ctx.fill();
 
-          // お札本体 (和風の朱・白の霊符)
+          // お札本体
+          ctx.rotate(0.08);
           ctx.fillStyle = '#ffffff';
           ctx.strokeStyle = CONFIG.PLAYER_COLOR;
           ctx.lineWidth = 2.5;
-
-          // 少し斜めに傾けて躍動感を演出
-          ctx.rotate(0.08);
-
-          // 縦長のお札
           ctx.fillRect(-14, -22, 28, 44);
           ctx.strokeRect(-14, -22, 28, 44);
 
-          // お札の朱色文字・和風呪印デザイン
+          // 呪印
           ctx.fillStyle = CONFIG.PLAYER_COLOR;
           ctx.fillRect(-6, -16, 12, 5);
           ctx.fillRect(-3, -8, 6, 18);
           ctx.fillRect(-8, 2, 16, 3);
           ctx.fillRect(-8, 10, 16, 3);
 
-          // お札の先端に輝く霊玉
-          ctx.fillStyle = '#ffe600';
-          ctx.shadowColor = '#ffe600';
-          ctx.beginPath();
-          ctx.arc(14, 0, 6, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.restore();
 
+          // ★ 弾幕ゲー必須：自機の喰らい判定ポイント描画（中央に赤く輝く点） ★
+          ctx.save();
+          ctx.translate(player.x, player.y);
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#ff0000';
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#ff0055';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, player.hitRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
           ctx.restore();
         }
       }
     }
 
     /* ---------------------------------------------------------
-       7. ゲーム主ループ (requestAnimationFrame)
+       8. 主ループ
        --------------------------------------------------------- */
-    function gameLoop(timestamp) {
-      update(timestamp);
+    function gameLoop() {
+      update();
       draw();
       requestAnimationFrame(gameLoop);
     }
 
-    // 背景・初期設定を行ってループ開始
     initBackgroundElements();
     requestAnimationFrame(gameLoop);
 
     /* ---------------------------------------------------------
-       8. ボタンイベントハンドラ
+       9. ボタンイベントハンドラ
        --------------------------------------------------------- */
     document.getElementById('start-btn').addEventListener('click', startGame);
     document.getElementById('retry-btn').addEventListener('click', startGame);
 
-    // フルスクリーン切り替え
     document.getElementById('fullscreen-btn').addEventListener('click', () => {
       const target = document.documentElement;
       if (!document.fullscreenElement) {
