@@ -1,1 +1,618 @@
-none
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>マイ・シューティングゲーム</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      background-color: #000;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      touch-action: none;
+    }
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #020208;
+    }
+    canvas {
+      background: #050515;
+      box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+      display: block;
+    }
+    /* UI Overlay screens */
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .screen {
+      pointer-events: auto;
+      background: rgba(5, 5, 20, 0.88);
+      border: 2px solid #00f3ff;
+      box-shadow: 0 0 15px #00f3ff, inset 0 0 15px #00f3ff;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      color: #fff;
+      max-width: 90%;
+      backdrop-filter: blur(5px);
+    }
+    h1 {
+      font-size: 2.2rem;
+      color: #00f3ff;
+      text-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff;
+      margin-bottom: 15px;
+      letter-spacing: 2px;
+    }
+    p {
+      color: #d0f0ff;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: linear-gradient(135deg, #ff007f, #7928ca);
+      color: #fff;
+      border: none;
+      padding: 12px 28px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 25px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #ff007f;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .btn:active {
+      transform: scale(0.95);
+      box-shadow: 0 0 5px #ff007f;
+    }
+    .btn-secondary {
+      background: linear-gradient(135deg, #00f3ff, #0070f3);
+      box-shadow: 0 0 10px #00f3ff;
+    }
+    /* HUD */
+    #hud {
+      position: absolute;
+      top: 15px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      font-family: monospace;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #00f3ff;
+      text-shadow: 0 0 8px #00f3ff;
+      display: none;
+    }
+    /* FIRE Button */
+    #fire-btn {
+      position: absolute;
+      bottom: 25px;
+      right: 25px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ff0055 0%, #a00033 100%);
+      border: 3px solid #ff6699;
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.1rem;
+      box-shadow: 0 0 15px #ff0055;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      pointer-events: auto;
+      touch-action: manipulation;
+    }
+    #fire-btn:active {
+      background: radial-gradient(circle, #ff6699 0%, #ff0055 100%);
+      transform: scale(0.92);
+    }
+    /* Portrait Warning Overlay */
+    #portrait-warning {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      color: #ff0055;
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    #portrait-warning .icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      animation: rotate-phone 2s infinite ease-in-out;
+    }
+    @keyframes rotate-phone {
+      0%, 10% { transform: rotate(0deg); }
+      40%, 60% { transform: rotate(-90deg); }
+      90%, 100% { transform: rotate(-90deg); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="portrait-warning">
+  <div class="icon">📱</div>
+  <div>スマホを横にしてね</div>
+</div>
+
+<div id="game-container">
+  <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div>TIME: <span id="time-val">0.0</span>s</div>
+    <div>HIT: <span id="hit-val">0</span></div>
+  </div>
+
+  <!-- FIRE BUTTON -->
+  <div id="fire-btn">FIRE</div>
+
+  <!-- TITLE SCREEN -->
+  <div id="title-screen" class="overlay">
+    <div class="screen">
+      <h1 id="title-text">MY SHOOTING GAME</h1>
+      <p>
+        【操作方法】<br>
+        ・上下ドラッグ/移動: 宇宙船を操作<br>
+        ・タップ / FIREボタン / Spaceキー: 弾を発射
+      </p>
+      <div class="btn-group">
+        <button id="start-btn" class="btn">PLAY GAME</button>
+        <button id="fullscreen-btn" class="btn btn-secondary">FULL SCREEN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME OVER SCREEN -->
+  <div id="gameover-screen" class="overlay" style="display: none;">
+    <div class="screen">
+      <h1 style="color: #ff0055; text-shadow: 0 0 10px #ff0055;">GAME OVER</h1>
+      <p>
+        生存時間: <span id="final-time" style="color: #fff; font-weight: bold;">0.0</span> 秒<br>
+        撃破数: <span id="final-hit" style="color: #fff; font-weight: bold;">0</span> 体
+      </p>
+      <div class="btn-group">
+        <button id="retry-btn" class="btn">RETRY</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==========================================
+// CONFIG (体験授業用 カスタマイズ設定)
+// ==========================================
+const CONFIG = {
+  TITLE: "マイ・シューティング",
+  BG_COLOR: "#050515",        // 背景色
+  PLAYER_COLOR: "#00f3ff",    // プレイヤー（自機）の色
+  ENEMY_COLOR: "#ff0055",     // 敵の色
+  BULLET_COLOR: "#ffe600",    // 弾の色
+  ENEMY_SPEED: 220,           // 敵の移動速度 (px/sec)
+  ENEMY_INTERVAL: 1.0,        // 敵の出現間隔 (秒)
+  BULLET_SPEED: 700,          // 弾の飛ぶ速度 (px/sec)
+  PLAYER_FOLLOW_SPEED: 12     // 自機の追従速度（大きいほど素早い）
+};
+
+// ==========================================
+// ゲーム初期化 & 変数
+// ==========================================
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const container = document.getElementById("game-container");
+
+// UI Elements
+const titleScreen = document.getElementById("title-screen");
+const gameoverScreen = document.getElementById("gameover-screen");
+const hud = document.getElementById("hud");
+const fireBtn = document.getElementById("fire-btn");
+const timeVal = document.getElementById("time-val");
+const hitVal = document.getElementById("hit-val");
+const finalTime = document.getElementById("final-time");
+const finalHit = document.getElementById("final-hit");
+const portraitWarning = document.getElementById("portrait-warning");
+const titleText = document.getElementById("title-text");
+
+titleText.textContent = CONFIG.TITLE;
+
+// 画面スケール管理
+let scale = 1;
+
+function resizeCanvas() {
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+  const targetRatio = 960 / 540;
+  let w = windowWidth;
+  let h = windowWidth / targetRatio;
+
+  if (h > windowHeight) {
+    h = windowHeight;
+    w = windowHeight * targetRatio;
+  }
+
+  canvas.style.width = `${w}px`;
+  canvas.style.height = `${h}px`;
+  
+  scale = w / 960;
+  
+  // 縦画面判定（画面幅より高さが大きい場合）
+  if (windowHeight > windowWidth) {
+    portraitWarning.style.display = "flex";
+  } else {
+    portraitWarning.style.display = "none";
+  }
+}
+
+window.addEventListener("resize", resizeCanvas);
+window.addEventListener("load", resizeCanvas);
+resizeCanvas();
+
+// ゲーム状態: "TITLE", "PLAYING", "GAMEOVER"
+let gameState = "TITLE";
+
+// ゲームオブジェクト定義
+let player = {
+  x: 100,
+  y: 270,
+  targetY: 270,
+  width: 40,
+  height: 30
+};
+
+let bullets = [];
+let enemies = [];
+let stars = []; // 背景用星粒子
+let enemySpawnTimer = 0;
+let surviveTime = 0;
+let hitCount = 0;
+let lastTime = 0;
+
+// 背景の星を初期生成
+for (let i = 0; i < 50; i++) {
+  stars.push({
+    x: Math.random() * 960,
+    y: Math.random() * 540,
+    speed: 20 + Math.random() * 80,
+    size: 1 + Math.random() * 2
+  });
+}
+
+// ==========================================
+// 入力イベント処理 (タッチ・マウス座標変換)
+// ==========================================
+let isDragging = false;
+
+function screenToGameY(clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const gameY = (clientY - rect.top) / scale;
+  return Math.max(25, Math.min(515, gameY));
+}
+
+function handlePointerDown(e) {
+  if (gameState !== "PLAYING") return;
+  isDragging = true;
+  const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+  if (clientY !== undefined) {
+    player.targetY = screenToGameY(clientY);
+  }
+  
+  // FIREボタン以外の画面タップ時にも弾を発射
+  if (e.target !== fireBtn) {
+    shootBullet();
+  }
+}
+
+function handlePointerMove(e) {
+  if (!isDragging || gameState !== "PLAYING") return;
+  const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+  if (clientY !== undefined) {
+    player.targetY = screenToGameY(clientY);
+  }
+}
+
+function handlePointerUp() {
+  isDragging = false;
+}
+
+window.addEventListener("mousedown", handlePointerDown);
+window.addEventListener("mousemove", handlePointerMove);
+window.addEventListener("mouseup", handlePointerUp);
+
+window.addEventListener("touchstart", (e) => {
+  handlePointerDown(e);
+}, { passive: false });
+
+window.addEventListener("touchmove", (e) => {
+  if (isDragging) {
+    e.preventDefault(); // スクロールキャンセル
+    handlePointerMove(e);
+  }
+}, { passive: false });
+
+window.addEventListener("touchend", handlePointerUp);
+
+// FIREボタン専用発射イベント（ドラッグ操作と干渉させない）
+function triggerFire(e) {
+  e.stopPropagation();
+  if (e.type === "touchstart") e.preventDefault();
+  if (gameState === "PLAYING") {
+    shootBullet();
+  }
+}
+fireBtn.addEventListener("mousedown", triggerFire);
+fireBtn.addEventListener("touchstart", triggerFire, { passive: false });
+
+// キーボード操作 (PC Spaceキー)
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && gameState === "PLAYING") {
+    shootBullet();
+  }
+});
+
+function shootBullet() {
+  bullets.push({
+    x: player.x + 25,
+    y: player.y,
+    width: 16,
+    height: 6
+  });
+}
+
+// Fullscreen API 実行
+document.getElementById("fullscreen-btn").addEventListener("click", () => {
+  if (!document.fullscreenElement) {
+    container.requestFullscreen().catch((err) => {
+      console.warn("Fullscreen error:", err);
+    });
+  } else {
+    document.exitFullscreen();
+  }
+});
+
+// ゲーム開始 & リトライ処理
+document.getElementById("start-btn").addEventListener("click", startGame);
+document.getElementById("retry-btn").addEventListener("click", startGame);
+
+function startGame() {
+  player.y = 270;
+  player.targetY = 270;
+  bullets = [];
+  enemies = [];
+  enemySpawnTimer = 0;
+  surviveTime = 0;
+  hitCount = 0;
+
+  timeVal.textContent = "0.0";
+  hitVal.textContent = "0";
+
+  titleScreen.style.display = "none";
+  gameoverScreen.style.display = "none";
+  hud.style.display = "flex";
+  fireBtn.style.display = "flex";
+
+  gameState = "PLAYING";
+  lastTime = performance.now();
+}
+
+function gameOver() {
+  gameState = "GAMEOVER";
+  hud.style.display = "none";
+  fireBtn.style.display = "none";
+  finalTime.textContent = surviveTime.toFixed(1);
+  finalHit.textContent = hitCount;
+  gameoverScreen.style.display = "flex";
+}
+
+// ==========================================
+// 更新ロジック (Update)
+// ==========================================
+function update(dt) {
+  if (gameState !== "PLAYING") return;
+
+  // 1. 生存時間の加算
+  surviveTime += dt;
+  timeVal.textContent = surviveTime.toFixed(1);
+
+  // 2. 背景の星スクロール
+  stars.forEach(star => {
+    star.x -= star.speed * dt;
+    if (star.x < 0) star.x = 960;
+  });
+
+  // 3. プレイヤー移動（スムーズ追従）
+  player.y += (player.targetY - player.y) * CONFIG.PLAYER_FOLLOW_SPEED * dt;
+
+  // 4. 弾の移動 & 画面外削除
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    b.x += CONFIG.BULLET_SPEED * dt;
+    if (b.x > 960) {
+      bullets.splice(i, 1);
+    }
+  }
+
+  // 5. 敵のタイマー出現
+  enemySpawnTimer += dt;
+  if (enemySpawnTimer >= CONFIG.ENEMY_INTERVAL) {
+    enemySpawnTimer = 0;
+    enemies.push({
+      x: 980,
+      y: 40 + Math.random() * (540 - 80),
+      width: 32,
+      height: 32
+    });
+  }
+
+  // 6. 敵の移動 & 画面外削除
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const e = enemies[i];
+    e.x -= CONFIG.ENEMY_SPEED * dt;
+    if (e.x < -40) {
+      enemies.splice(i, 1);
+    }
+  }
+
+  // 7. 当たり判定（弾 vs 敵）
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    for (let j = enemies.length - 1; j >= 0; j--) {
+      const e = enemies[j];
+      if (
+        b.x < e.x + e.width / 2 &&
+        b.x + b.width > e.x - e.width / 2 &&
+        Math.abs(b.y - e.y) < (b.height + e.height) / 2
+      ) {
+        bullets.splice(i, 1);
+        enemies.splice(j, 1);
+        hitCount++;
+        hitVal.textContent = hitCount;
+        break;
+      }
+    }
+  }
+
+  // 8. 当たり判定（自機 vs 敵）
+  for (let j = 0; j < enemies.length; j++) {
+    const e = enemies[j];
+    const hitBoxPlayer = { x: player.x, y: player.y, r: 15 };
+    const hitBoxEnemy = { x: e.x, y: e.y, r: 16 };
+    const dx = hitBoxPlayer.x - hitBoxEnemy.x;
+    const dy = hitBoxPlayer.y - hitBoxEnemy.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < hitBoxPlayer.r + hitBoxEnemy.r) {
+      gameOver();
+      break;
+    }
+  }
+}
+
+// ==========================================
+// 描画ロジック (Render)
+// ==========================================
+function render() {
+  // 背景塗りつぶし
+  ctx.fillStyle = CONFIG.BG_COLOR;
+  ctx.fillRect(0, 0, 960, 540);
+
+  // 背景の星
+  ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+  stars.forEach(star => {
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  if (gameState === "TITLE") return;
+
+  // 弾の描画
+  ctx.fillStyle = CONFIG.BULLET_COLOR;
+  ctx.shadowColor = CONFIG.BULLET_COLOR;
+  ctx.shadowBlur = 8;
+  bullets.forEach(b => {
+    ctx.fillRect(b.x, b.y - b.height / 2, b.width, b.height);
+  });
+
+  // 敵の描画（ネオンカラーの菱形メカ）
+  ctx.fillStyle = CONFIG.ENEMY_COLOR;
+  ctx.shadowColor = CONFIG.ENEMY_COLOR;
+  ctx.shadowBlur = 10;
+  enemies.forEach(e => {
+    ctx.beginPath();
+    ctx.moveTo(e.x - e.width / 2, e.y);
+    ctx.lineTo(e.x, e.y - e.height / 2);
+    ctx.lineTo(e.x + e.width / 2, e.y);
+    ctx.lineTo(e.x, e.y + e.height / 2);
+    ctx.closePath();
+    ctx.fill();
+  });
+
+  // 自機の描画（ネオンカラーの宇宙船）
+  if (gameState === "PLAYING") {
+    ctx.fillStyle = CONFIG.PLAYER_COLOR;
+    ctx.shadowColor = CONFIG.PLAYER_COLOR;
+    ctx.shadowBlur = 12;
+
+    ctx.beginPath();
+    ctx.moveTo(player.x + 20, player.y);
+    ctx.lineTo(player.x - 20, player.y - player.height / 2);
+    ctx.lineTo(player.x - 10, player.y);
+    ctx.lineTo(player.x - 20, player.y + player.height / 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // バーニア噴射エフェクト
+    ctx.fillStyle = "#ff6600";
+    ctx.shadowColor = "#ff6600";
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.moveTo(player.x - 12, player.y - 5);
+    ctx.lineTo(player.x - 22 - Math.random() * 8, player.y);
+    ctx.lineTo(player.x - 12, player.y + 5);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // 発光シャドウのリセット
+  ctx.shadowBlur = 0;
+}
+
+// ==========================================
+// メインゲームループ (requestAnimationFrame)
+// ==========================================
+function gameLoop(timestamp) {
+  if (!lastTime) lastTime = timestamp;
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
+  lastTime = timestamp;
+
+  update(dt);
+  render();
+
+  requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
+</script>
+
+</body>
+</html>

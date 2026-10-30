@@ -1,1 +1,705 @@
-none
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>マイ・シューティングゲーム</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #050508;
+            color: #ffffff;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000000;
+        }
+
+        #game-container {
+            position: relative;
+            width: 960px;
+            height: 540px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            overflow: hidden;
+            background-color: #0a0a1a;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(10, 10, 26, 0.88);
+            backdrop-filter: blur(6px);
+            z-index: 10;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h1 {
+            font-size: 44px;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 40px #0088ff;
+            margin-bottom: 15px;
+            letter-spacing: 3px;
+            text-align: center;
+        }
+
+        p.instructions {
+            font-size: 15px;
+            color: #c0d0e0;
+            margin-bottom: 25px;
+            text-align: center;
+            line-height: 1.8;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff;
+            background: linear-gradient(135deg, #00ffff, #0066ff);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            transition: all 0.15s ease;
+            outline: none;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.8);
+        }
+
+        .btn-sub {
+            background: linear-gradient(135deg, #444466, #222244);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff0055, #ff5500);
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.5);
+        }
+
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ffff;
+            text-shadow: 0 0 8px #00ffff;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        #fire-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff0055 0%, #990033 100%);
+            border: 2px solid #ff6699;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.7);
+            z-index: 8;
+            cursor: pointer;
+        }
+
+        #fire-btn:active {
+            transform: scale(0.92);
+            background: radial-gradient(circle, #ff5588 0%, #cc0044 100%);
+        }
+
+        #portrait-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #050508;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .phone-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+            animation: rotatePhone 2s infinite ease-in-out;
+        }
+
+        @keyframes rotatePhone {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(-90deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-wrapper">
+        <div id="game-container">
+            <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+            <!-- HUD (画面表示) -->
+            <div id="hud" class="hidden">
+                <div>TIME: <span id="time-val">0.0</span>s</div>
+                <div>HIT: <span id="hit-val">0</span></div>
+            </div>
+
+            <!-- FIREボタン (スマホ用) -->
+            <div id="fire-btn" class="hidden">FIRE</div>
+
+            <!-- タイトル画面 -->
+            <div id="title-screen" class="overlay">
+                <h1 id="title-text">MY SHOOTING GAME</h1>
+                <p class="instructions">
+                    【操作方法】<br>
+                    上下ドラッグ：宇宙船の移動<br>
+                    画面タップ または FIREボタン：弾を発射 (PC: Spaceキー)
+                </p>
+                <div class="btn-group">
+                    <button class="btn" id="start-btn">PLAY</button>
+                    <button class="btn btn-sub" id="fullscreen-btn">FULL SCREEN</button>
+                </div>
+            </div>
+
+            <!-- ゲームオーバー画面 -->
+            <div id="gameover-screen" class="overlay hidden">
+                <h1 style="color: #ff0055; text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055;">GAME OVER</h1>
+                <p class="instructions" style="font-size: 18px; line-height: 2;">
+                    TIME: <span id="final-time" style="color: #00ffff;">0.0</span> 秒<br>
+                    HIT: <span id="final-hit" style="color: #00ffff;">0</span> 機撃破
+                </p>
+                <button class="btn btn-danger" id="retry-btn">RETRY</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 縦画面注意表示 -->
+    <div id="portrait-warning" class="hidden">
+        <div class="phone-icon">📱</div>
+        <h2 style="color: #00ffff; margin-bottom: 10px;">スマホを横にしてね</h2>
+        <p style="color: #aaaaaa;">このゲームは横画面専用です</p>
+    </div>
+
+    <script>
+        // ==========================================
+        // 【CONFIG】設定変更コーナー（授業で自由に数値を変更！）
+        // ==========================================
+        const CONFIG = {
+            TITLE: "MY SHOOTING GAME", // ゲームタイトル
+            BG_COLOR: "#0a0a1a",       // 背景色
+            PLAYER_COLOR: "#00ffff",   // 自機の色
+            ENEMY_COLOR: "#ff0055",    // 敵の色
+            BULLET_COLOR: "#ffff00",   // 弾の色
+            ENEMY_SPEED: 230,          // 敵の移動速度 (px/秒)
+            ENEMY_INTERVAL: 0.9,       // 敵が出現する間隔 (秒)
+            BULLET_SPEED: 750,         // 弾の移動速度 (px/秒)
+            PLAYER_SMOOTH: 0.2,        // 移動追従のなめらかさ (0.01~1.0)
+            STAR_COUNT: 70             // 背景の星の数
+        };
+
+        // ==========================================
+        // システム定数・変数定義
+        // ==========================================
+        const V_WIDTH = 960;
+        const V_HEIGHT = 540;
+
+        let canvas, ctx;
+        let gameState = 'TITLE'; // 'TITLE', 'PLAYING', 'GAMEOVER'
+        let gameTime = 0;
+        let hitCount = 0;
+        let lastTimestamp = 0;
+        let enemyTimer = 0;
+        let isPaused = false;
+
+        // ゲームオブジェクト
+        let player = {
+            x: 90,
+            y: V_HEIGHT / 2,
+            targetY: V_HEIGHT / 2,
+            radius: 20
+        };
+
+        let bullets = [];
+        let enemies = [];
+        let stars = [];
+        let particles = [];
+
+        // UI要素参照
+        let titleText, timeVal, hitVal, finalTime, finalHit;
+        let titleScreen, gameoverScreen, hud, fireBtn, portraitWarning;
+
+        // 初期化処理
+        window.addEventListener('DOMContentLoaded', () => {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+
+            titleText = document.getElementById('title-text');
+            timeVal = document.getElementById('time-val');
+            hitVal = document.getElementById('hit-val');
+            finalTime = document.getElementById('final-time');
+            finalHit = document.getElementById('final-hit');
+
+            titleScreen = document.getElementById('title-screen');
+            gameoverScreen = document.getElementById('gameover-screen');
+            hud = document.getElementById('hud');
+            fireBtn = document.getElementById('fire-btn');
+            portraitWarning = document.getElementById('portrait-warning');
+
+            // CONFIG設定の反映
+            titleText.textContent = CONFIG.TITLE;
+
+            // 背景星の生成
+            initStars();
+
+            // イベント登録
+            setupEventListeners();
+
+            // リサイズ・画面向き判定
+            resizeGame();
+            window.addEventListener('resize', resizeGame);
+            window.addEventListener('orientationchange', resizeGame);
+
+            // ループスタート
+            requestAnimationFrame(gameLoop);
+        });
+
+        // 背景星の初期化
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < CONFIG.STAR_COUNT; i++) {
+                stars.push({
+                    x: Math.random() * V_WIDTH,
+                    y: Math.random() * V_HEIGHT,
+                    size: Math.random() * 2 + 1,
+                    speed: Math.random() * 80 + 20
+                });
+            }
+        }
+
+        // ==========================================
+        // イベント ＆ タッチ座標変換
+        // ==========================================
+        function setupEventListeners() {
+            // UIボタン
+            document.getElementById('start-btn').addEventListener('click', startGame);
+            document.getElementById('retry-btn').addEventListener('click', resetGame);
+            document.getElementById('fullscreen-btn').addEventListener('click', toggleFullScreen);
+
+            // FIREボタン (ドラッグ移動と干渉しないよう独立処理)
+            fireBtn.addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+                if (gameState === 'PLAYING') shootBullet();
+            });
+
+            // キーボード (PC用 Spaceキー発射)
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    if (gameState === 'PLAYING') shootBullet();
+                    e.preventDefault();
+                }
+            });
+
+            // 上下ドラッグ移動 ＆ 画面タップ発射
+            const container = document.getElementById('game-container');
+            let isPointerDown = false;
+
+            container.addEventListener('pointerdown', (e) => {
+                if (gameState !== 'PLAYING') return;
+                isPointerDown = true;
+                const pos = getGameCoordinates(e.clientX, e.clientY);
+                player.targetY = pos.y;
+
+                // FIREボタン以外へのタップでも弾を発射
+                if (e.target !== fireBtn) {
+                    shootBullet();
+                }
+            });
+
+            container.addEventListener('pointermove', (e) => {
+                if (gameState !== 'PLAYING') return;
+                if (isPointerDown || e.pointerType === 'mouse') {
+                    const pos = getGameCoordinates(e.clientX, e.clientY);
+                    player.targetY = pos.y;
+                }
+            });
+
+            const endPointer = () => { isPointerDown = false; };
+            container.addEventListener('pointerup', endPointer);
+            container.addEventListener('pointercancel', endPointer);
+        }
+
+        // 画面座標 -> ゲーム固定解像度(960x540)への座標変換
+        function getGameCoordinates(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = V_WIDTH / rect.width;
+            const scaleY = V_HEIGHT / rect.height;
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        // レスポンシブアスペクト比計算 & 縦横検知
+        function resizeGame() {
+            const container = document.getElementById('game-container');
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+
+            // 縦画面判定
+            if (windowWidth < windowHeight) {
+                portraitWarning.classList.remove('hidden');
+                isPaused = true;
+            } else {
+                portraitWarning.classList.add('hidden');
+                isPaused = false;
+            }
+
+            // 16:9維持のスケール処理
+            let targetWidth = windowWidth;
+            let targetHeight = windowWidth * (9 / 16);
+
+            if (targetHeight > windowHeight) {
+                targetHeight = windowHeight;
+                targetWidth = windowHeight * (16 / 9);
+            }
+
+            container.style.width = `${targetWidth}px`;
+            container.style.height = `${targetHeight}px`;
+        }
+
+        // Fullscreen API 呼び出し
+        function toggleFullScreen() {
+            const container = document.getElementById('game-container');
+            if (!document.fullscreenElement) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // ==========================================
+        // ゲームステート管理
+        // ==========================================
+        function startGame() {
+            gameState = 'PLAYING';
+            titleScreen.classList.add('hidden');
+            gameoverScreen.classList.add('hidden');
+            hud.classList.remove('hidden');
+            fireBtn.classList.remove('hidden');
+            resetGameData();
+        }
+
+        function resetGame() {
+            gameState = 'PLAYING';
+            gameoverScreen.classList.add('hidden');
+            resetGameData();
+        }
+
+        function resetGameData() {
+            gameTime = 0;
+            hitCount = 0;
+            enemyTimer = 0;
+            bullets = [];
+            enemies = [];
+            particles = [];
+            player.y = V_HEIGHT / 2;
+            player.targetY = V_HEIGHT / 2;
+            timeVal.textContent = "0.0";
+            hitVal.textContent = "0";
+        }
+
+        function gameOver() {
+            gameState = 'GAMEOVER';
+            hud.classList.add('hidden');
+            fireBtn.classList.add('hidden');
+            finalTime.textContent = gameTime.toFixed(1);
+            finalHit.textContent = hitCount;
+            gameoverScreen.classList.remove('hidden');
+        }
+
+        function shootBullet() {
+            bullets.push({
+                x: player.x + 20,
+                y: player.y,
+                radius: 5,
+                speed: CONFIG.BULLET_SPEED
+            });
+        }
+
+        function spawnEnemy() {
+            const size = Math.random() * 20 + 25; // 25~45px
+            enemies.push({
+                x: V_WIDTH + size,
+                y: Math.random() * (V_HEIGHT - size * 2) + size,
+                radius: size / 2,
+                speed: CONFIG.ENEMY_SPEED * (0.8 + Math.random() * 0.4)
+            });
+        }
+
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 12; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 180 + 40;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: Math.random() * 3 + 1,
+                    life: 0.4,
+                    maxLife: 0.4,
+                    color: color
+                });
+            }
+        }
+
+        // ==========================================
+        // ゲームループ & 更新処理
+        // ==========================================
+        function gameLoop(timestamp) {
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
+            lastTimestamp = timestamp;
+
+            if (!isPaused) {
+                update(dt);
+                draw();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function update(dt) {
+            // 背景星の移動
+            stars.forEach(star => {
+                star.x -= star.speed * dt;
+                if (star.x < 0) star.x = V_WIDTH;
+            });
+
+            if (gameState !== 'PLAYING') return;
+
+            // 生存時間更新
+            gameTime += dt;
+            timeVal.textContent = gameTime.toFixed(1);
+
+            // 自機の移動追従
+            player.targetY = Math.max(player.radius, Math.min(V_HEIGHT - player.radius, player.targetY));
+            player.y += (player.targetY - player.y) * CONFIG.PLAYER_SMOOTH;
+
+            // 敵生成タイマー
+            enemyTimer += dt;
+            if (enemyTimer >= CONFIG.ENEMY_INTERVAL) {
+                spawnEnemy();
+                enemyTimer = 0;
+            }
+
+            // 弾の移動 & 画面外消去
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                bullets[i].x += bullets[i].speed * dt;
+                if (bullets[i].x > V_WIDTH + 20) {
+                    bullets.splice(i, 1);
+                }
+            }
+
+            // 敵の移動 & 当たり判定
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                enemy.x -= enemy.speed * dt;
+
+                // 自機と敵の当たり判定
+                const distToPlayer = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+                if (distToPlayer < enemy.radius + player.radius) {
+                    createParticles(player.x, player.y, CONFIG.PLAYER_COLOR);
+                    createParticles(enemy.x, enemy.y, CONFIG.ENEMY_COLOR);
+                    gameOver();
+                    return;
+                }
+
+                // 画面外脱出
+                if (enemy.x < -enemy.radius) {
+                    enemies.splice(i, 1);
+                    continue;
+                }
+
+                // 弾と敵の当たり判定
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    const bullet = bullets[j];
+                    const distToBullet = Math.hypot(enemy.x - bullet.x, enemy.y - bullet.y);
+
+                    if (distToBullet < enemy.radius + bullet.radius) {
+                        createParticles(enemy.x, enemy.y, CONFIG.ENEMY_COLOR);
+                        enemies.splice(i, 1);
+                        bullets.splice(j, 1);
+                        hitCount++;
+                        hitVal.textContent = hitCount;
+                        break;
+                    }
+                }
+            }
+
+            // パーティクルの更新
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.life -= dt;
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        // ==========================================
+        // 描画処理 (Canvas)
+        // ==========================================
+        function draw() {
+            // 背景クリア
+            ctx.fillStyle = CONFIG.BG_COLOR;
+            ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+            // 星の描画
+            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            if (gameState === 'TITLE') return;
+
+            // 弾の描画
+            ctx.fillStyle = CONFIG.BULLET_COLOR;
+            ctx.shadowColor = CONFIG.BULLET_COLOR;
+            ctx.shadowBlur = 10;
+            bullets.forEach(b => {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 敵の描画 (六角形)
+            ctx.fillStyle = CONFIG.ENEMY_COLOR;
+            ctx.shadowColor = CONFIG.ENEMY_COLOR;
+            ctx.shadowBlur = 12;
+            enemies.forEach(e => {
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI / 3) * i;
+                    const x = e.x + e.radius * Math.cos(angle);
+                    const y = e.y + e.radius * Math.sin(angle);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+            });
+
+            // 自機の描画 (宇宙船)
+            if (gameState === 'PLAYING') {
+                // バーナーの炎
+                ctx.fillStyle = "#ffaa00";
+                ctx.beginPath();
+                ctx.moveTo(player.x - player.radius, player.y - 8);
+                ctx.lineTo(player.x - player.radius - (10 + Math.random() * 10), player.y);
+                ctx.lineTo(player.x - player.radius, player.y + 8);
+                ctx.closePath();
+                ctx.fill();
+
+                // 機体本体
+                ctx.fillStyle = CONFIG.PLAYER_COLOR;
+                ctx.shadowColor = CONFIG.PLAYER_COLOR;
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.moveTo(player.x + player.radius + 5, player.y);
+                ctx.lineTo(player.x - player.radius, player.y - player.radius + 4);
+                ctx.lineTo(player.x - player.radius + 6, player.y);
+                ctx.lineTo(player.x - player.radius, player.y + player.radius - 4);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // パーティクルの描画
+            particles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = 6;
+                ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1.0;
+            ctx.shadowBlur = 0;
+        }
+    </script>
+</body>
+</html>
