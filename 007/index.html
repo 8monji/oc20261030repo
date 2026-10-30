@@ -88,6 +88,14 @@
       pointer-events: none;
     }
 
+    /* バフステータス表示 */
+    #buffStatus {
+      font-size: 16px;
+      margin-top: 4px;
+      color: #00ffff;
+      text-shadow: 0 0 8px #00ffff;
+    }
+
     /* ボタン類 */
     .btn {
       padding: 12px 36px;
@@ -179,6 +187,7 @@
     <!-- プレイ中HUD -->
     <div id="hud">
       TIME: <span id="timeVal">0.0</span>s | HIT: <span id="hitVal">0</span>
+      <div id="buffStatus">SHIELD: <span id="shieldVal">ON</span> | 3-WAY: <span id="tripleVal">0.0</span>s</div>
     </div>
 
     <!-- FIREボタン（スマホ向け） -->
@@ -189,9 +198,11 @@
       <h1 id="titleText">海底シューティング</h1>
       <div class="instructions">
         【操作方法】<br>
-        上下ドラッグ：潜水艦の移動<br>
-        画面タップ または FIREボタン：魚雷発射<br>
-        （PC: スペースキーでも発射可能）
+        画面ドラッグ：潜水艦の自由移動（全方向）<br>
+        FIREボタン または 2本指タップ：魚雷発射<br>
+        （PC: 矢印キー/WASDで移動、スペースキーで発射）<br><br>
+        🛡️ スタート時から「水流バリア」を標準装備！<br>
+        🐠 撃破ドロップ：🛡️バリア再展開 / ⚡3WAY拡散魚雷
       </div>
       <button id="startBtn" class="btn">PLAY GAME</button>
       <button id="fullscreenBtn" class="btn btn-secondary">FULL SCREEN</button>
@@ -216,20 +227,24 @@
   <script>
     // ==========================================
     // 【設定パラメーター (CONFIG)】
-    // 海底世界に合わせてカラー・グラデーション・バランスを調整
     // ==========================================
     const CONFIG = {
       title: "海底シューティング",
-      // 背景3段グラデーション色（浅瀬→中層→深海）
       bgColors: ["#005f73", "#0a2540", "#010a15"],
-      // オブジェクト用グラデーション設定（[開始色, 終了色]）
-      playerGradient: ["#ffe600", "#ff6600"], // 自機：煌めくゴールド〜オレンジ
-      enemyGradient:  ["#ff3366", "#990033"], // 敵：深海レッド〜ダークチェリー
-      bulletGradient: ["#00ffff", "#0088ff"], // 魚雷：発光シアン〜ブルー
-      enemySpeed: 230,              // 敵の移動速度 (px/秒)
-      spawnInterval: 1.2,           // 敵の出現間隔 (秒)
-      bulletSpeed: 750,             // 弾の飛行速度 (px/秒)
-      moveFollowSpeed: 15.0         // 自機の指への追従速度
+      playerGradient: ["#ffe600", "#ff6600"],
+      enemyGradient:  ["#ff3366", "#990033"],
+      bulletGradient: ["#00ffff", "#0088ff"],
+      enemyBulletGradient: ["#ff00ff", "#ff0055"],
+      enemySpeed: 230,
+      spawnInterval: 1.2,
+      bulletSpeed: 750,
+      enemyBulletSpeed: 400,
+      enemyShootInterval: 2.0,
+      moveFollowSpeed: 15.0,
+      keyboardSpeed: 450, // PCキーボード操作時の移動速度 (px/秒)
+      itemDropRate: 0.35,
+      itemSpeed: 120,
+      tripleShotDuration: 8.0
     };
 
     // ==========================================
@@ -252,29 +267,51 @@
     const fireBtn = document.getElementById('fireBtn');
     const orientationWarning = document.getElementById('orientation-warning');
     const timeVal = document.getElementById('timeVal');
-    const hitVal = document.getElementById('hitVal');
+    const hitVal.innerText = document.getElementById('hitVal');
     const finalTime = document.getElementById('finalTime');
     const finalHit = document.getElementById('finalHit');
+    const shieldVal = document.getElementById('shieldVal');
+    const tripleVal = document.getElementById('tripleVal');
 
-    // CONFIGの適用
     titleText.innerText = CONFIG.title;
 
     // ゲーム状態
-    let gameState = 'TITLE'; // 'TITLE', 'PLAYING', 'GAMEOVER'
+    let gameState = 'TITLE';
     let lastTime = 0;
     let scale = 1;
     let bounds = { left: 0, top: 0 };
 
-    // ゲーム変数
-    let player = { x: 90, y: 270, targetY: 270, radius: 22 };
+    // ゲーム変数（X軸・Y軸ともにターゲット座標を所持）
+    let player = {
+      x: 90,
+      y: 270,
+      targetX: 90,
+      targetY: 270,
+      radius: 22,
+      hasShield: true,
+      tripleShotTimer: 0
+    };
     let bullets = [];
+    let enemyBullets = [];
     let enemies = [];
+    let items = [];
     let elapsedTime = 0;
     let hitCount = 0;
     let enemySpawnTimer = 0;
 
+    // キーボード入力の状態管理
+    const keys = {
+      ArrowUp: false,
+      ArrowDown: false,
+      ArrowLeft: false,
+      ArrowRight: false,
+      KeyW: false,
+      KeyS: false,
+      KeyA: false,
+      KeyD: false
+    };
+
     // --- 海底背景・エフェクト用データ ---
-    // 1. 環境浮遊泡（グラデーションの質感付き）
     let bgBubbles = [];
     for (let i = 0; i < 60; i++) {
       bgBubbles.push({
@@ -287,7 +324,6 @@
       });
     }
 
-    // 2. アクション泡（バースト・軌跡）
     let actionBubbles = [];
 
     function createBubbleBurst(x, y, count, minSpeed, maxSpeed) {
@@ -306,7 +342,6 @@
       }
     }
 
-    // 3. 海底地形（グラデーション表示用の砂地・岩場）
     let seabedPoints = [];
     const segments = 20;
     for (let i = 0; i <= segments; i++) {
@@ -315,7 +350,6 @@
       seabedPoints.push({ x, y });
     }
 
-    // 4. 海藻のデータ
     let seaweeds = [
       { x: 120, height: 90, phase: 0 },
       { x: 280, height: 130, phase: 1.5 },
@@ -325,7 +359,7 @@
     ];
 
     // ==========================================
-    // リサイズ・画面リサイズ計算
+    // リサイズ計算
     // ==========================================
     function updateLayout() {
       if (window.innerHeight > window.innerWidth) {
@@ -351,49 +385,85 @@
     window.addEventListener('orientationchange', updateLayout);
     updateLayout();
 
-    // ==========================================
-    // 座標変換 (画面座標 -> 固定ゲーム座標)
-    // ==========================================
-    function getGameCoordinates(clientY) {
+    // X, Y両方のゲーム座標変換
+    function getGameCoordinates(clientX, clientY) {
+      const touchX = clientX - bounds.left;
       const touchY = clientY - bounds.top;
+      const gameX = touchX / scale;
       const gameY = touchY / scale;
-      return Math.max(player.radius, Math.min(GAME_HEIGHT - player.radius, gameY));
+      return {
+        x: Math.max(player.radius, Math.min(GAME_WIDTH - player.radius, gameX)),
+        y: Math.max(player.radius, Math.min(GAME_HEIGHT - player.radius, gameY))
+      };
     }
 
     // ==========================================
-    // 入力イベント処理
+    // 入力処理（自由移動・全方向ドラッグ対応）
     // ==========================================
-    let isDragging = false;
+    let activeTouchId = null;
 
     function handlePointerDown(e) {
       if (gameState !== 'PLAYING') return;
       if (e.target === fireBtn) return;
-      
-      isDragging = true;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      player.targetY = getGameCoordinates(clientY);
 
-      shootBullet();
+      if (e.touches) {
+        // マルチタッチ対応：移動用のタッチIDを追跡
+        if (activeTouchId === null) {
+          const touch = e.changedTouches[0];
+          activeTouchId = touch.identifier;
+          const coords = getGameCoordinates(touch.clientX, touch.clientY);
+          player.targetX = coords.x;
+          player.targetY = coords.y;
+        } else if (e.touches.length > 1) {
+          // 2本目の指タップで弾発射
+          shootBullet();
+        }
+      } else {
+        const coords = getGameCoordinates(e.clientX, e.clientY);
+        player.targetX = coords.x;
+        player.targetY = coords.y;
+      }
     }
 
     function handlePointerMove(e) {
-      if (!isDragging || gameState !== 'PLAYING') return;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      player.targetY = getGameCoordinates(clientY);
+      if (gameState !== 'PLAYING') return;
+      if (e.touches) {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === activeTouchId) {
+            const touch = e.changedTouches[i];
+            const coords = getGameCoordinates(touch.clientX, touch.clientY);
+            player.targetX = coords.x;
+            player.targetY = coords.y;
+            break;
+          }
+        }
+      } else if (e.buttons === 1 && e.target !== fireBtn) {
+        const coords = getGameCoordinates(e.clientX, e.clientY);
+        player.targetX = coords.x;
+        player.targetY = coords.y;
+      }
     }
 
-    function handlePointerEnd() {
-      isDragging = false;
+    function handlePointerEnd(e) {
+      if (e.touches) {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === activeTouchId) {
+            activeTouchId = null;
+            break;
+          }
+        }
+      }
     }
 
     window.addEventListener('mousedown', handlePointerDown);
     window.addEventListener('mousemove', handlePointerMove);
-    window.addEventListener('mouseup', handlePointerEnd);
 
     window.addEventListener('touchstart', handlePointerDown, { passive: false });
     window.addEventListener('touchmove', handlePointerMove, { passive: false });
     window.addEventListener('touchend', handlePointerEnd);
+    window.addEventListener('touchcancel', handlePointerEnd);
 
+    // FIREボタン（タップしても移動に干渉しない）
     fireBtn.addEventListener('touchstart', (e) => {
       e.stopPropagation();
       e.preventDefault();
@@ -404,18 +474,43 @@
       if (gameState === 'PLAYING') shootBullet();
     });
 
+    // キーボード入力処理（移動・発射）
     window.addEventListener('keydown', (e) => {
+      if (e.code in keys) {
+        keys[e.code] = true;
+      }
       if (e.code === 'Space' && gameState === 'PLAYING') {
         shootBullet();
       }
     });
 
+    window.addEventListener('keyup', (e) => {
+      if (e.code in keys) {
+        keys[e.code] = false;
+      }
+    });
+
     function shootBullet() {
-      bullets.push({
-        x: player.x + 30,
-        y: player.y,
-        radius: 7
-      });
+      if (player.tripleShotTimer > 0) {
+        const angles = [-0.2, 0, 0.2];
+        angles.forEach(angle => {
+          bullets.push({
+            x: player.x + 30,
+            y: player.y,
+            vx: Math.cos(angle) * CONFIG.bulletSpeed,
+            vy: Math.sin(angle) * CONFIG.bulletSpeed,
+            radius: 7
+          });
+        });
+      } else {
+        bullets.push({
+          x: player.x + 30,
+          y: player.y,
+          vx: CONFIG.bulletSpeed,
+          vy: 0,
+          radius: 7
+        });
+      }
       createBubbleBurst(player.x + 30, player.y, 8, 40, 120);
     }
 
@@ -432,6 +527,29 @@
     startBtn.addEventListener('click', startGame);
     retryBtn.addEventListener('click', startGame);
 
+    function tryDropItem(x, y) {
+      if (Math.random() < CONFIG.itemDropRate) {
+        const type = Math.random() < 0.5 ? 'SHIELD' : 'TRIPLE';
+        items.push({
+          x: x,
+          y: y,
+          type: type,
+          radius: 16,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    function takeDamage() {
+      if (player.hasShield) {
+        player.hasShield = false;
+        createBubbleBurst(player.x, player.y, 25, 80, 200);
+        return false;
+      }
+      gameOver();
+      return true;
+    }
+
     // ==========================================
     // ゲームルーチン
     // ==========================================
@@ -441,13 +559,21 @@
       hitCount = 0;
       enemySpawnTimer = 0;
       bullets = [];
+      enemyBullets = [];
       enemies = [];
+      items = [];
       actionBubbles = [];
+      player.x = 90;
       player.y = GAME_HEIGHT / 2;
+      player.targetX = 90;
       player.targetY = GAME_HEIGHT / 2;
+      player.hasShield = true;
+      player.tripleShotTimer = 0;
 
-      timeVal.innerText = '0.0';
-      hitVal.innerText = '0';
+      document.getElementById('timeVal').innerText = '0.0';
+      document.getElementById('hitVal').innerText = '0';
+      shieldVal.innerText = 'ON';
+      tripleVal.innerText = '0.0';
 
       titleScreen.classList.add('hidden');
       gameOverScreen.classList.add('hidden');
@@ -463,7 +589,6 @@
 
     // 主更新処理 (dt: 経過時間 秒)
     function update(dt) {
-      // 1. 環境泡の上昇と左右ゆらぎ
       bgBubbles.forEach(b => {
         b.y -= b.speed * dt;
         b.wobble += dt * b.wobbleSpeed;
@@ -474,7 +599,6 @@
         }
       });
 
-      // 2. アクション泡の更新
       for (let i = actionBubbles.length - 1; i >= 0; i--) {
         const ab = actionBubbles[i];
         ab.x += ab.vx * dt;
@@ -489,9 +613,37 @@
 
       // タイム加算
       elapsedTime += dt;
-      timeVal.innerText = elapsedTime.toFixed(1);
+      document.getElementById('timeVal').innerText = elapsedTime.toFixed(1);
 
-      // 潜水艦のスクリューから小さな連続泡
+      // バフタイマーの更新
+      if (player.tripleShotTimer > 0) {
+        player.tripleShotTimer -= dt;
+        if (player.tripleShotTimer < 0) player.tripleShotTimer = 0;
+      }
+      shieldVal.innerText = player.hasShield ? 'ON' : 'OFF';
+      shieldVal.style.color = player.hasShield ? '#00ffff' : '#888888';
+      tripleVal.innerText = player.tripleShotTimer.toFixed(1);
+      tripleVal.style.color = player.tripleShotTimer > 0 ? '#76ff03' : '#888888';
+
+      // --- キーボード操作時のターゲット位置更新 ---
+      let kx = 0, ky = 0;
+      if (keys.ArrowUp || keys.KeyW) ky -= 1;
+      if (keys.ArrowDown || keys.KeyS) ky += 1;
+      if (keys.ArrowLeft || keys.KeyA) kx -= 1;
+      if (keys.ArrowRight || keys.KeyD) kx += 1;
+
+      if (kx !== 0 || ky !== 0) {
+        player.targetX += kx * CONFIG.keyboardSpeed * dt;
+        player.targetY += ky * CONFIG.keyboardSpeed * dt;
+        player.targetX = Math.max(player.radius, Math.min(GAME_WIDTH - player.radius, player.targetX));
+        player.targetY = Math.max(player.radius, Math.min(GAME_HEIGHT - player.radius, player.targetY));
+      }
+
+      // --- 自機の2次元（X軸・Y軸）スムーズ追従移動 ---
+      player.x += (player.targetX - player.x) * CONFIG.moveFollowSpeed * dt;
+      player.y += (player.targetY - player.y) * CONFIG.moveFollowSpeed * dt;
+
+      // 潜水艦スクリュー泡
       if (Math.random() < 0.6) {
         actionBubbles.push({
           x: player.x - 25,
@@ -504,12 +656,10 @@
         });
       }
 
-      // 潜水艦のなめらかな追従移動
-      player.y += (player.targetY - player.y) * CONFIG.moveFollowSpeed * dt;
-
-      // 魚雷の移動
+      // プレイヤー魚雷の移動
       for (let i = bullets.length - 1; i >= 0; i--) {
-        bullets[i].x += CONFIG.bulletSpeed * dt;
+        bullets[i].x += bullets[i].vx * dt;
+        bullets[i].y += bullets[i].vy * dt;
 
         if (Math.random() < 0.5) {
           actionBubbles.push({
@@ -523,7 +673,7 @@
           });
         }
 
-        if (bullets[i].x > GAME_WIDTH + 20) {
+        if (bullets[i].x > GAME_WIDTH + 20 || bullets[i].y < -20 || bullets[i].y > GAME_HEIGHT + 20) {
           bullets.splice(i, 1);
         }
       }
@@ -536,22 +686,61 @@
           x: GAME_WIDTH + 30,
           y: Math.random() * (GAME_HEIGHT - 130) + 40,
           radius: 20,
-          phase: Math.random() * Math.PI * 2
+          phase: Math.random() * Math.PI * 2,
+          shootTimer: Math.random() * CONFIG.enemyShootInterval
         });
       }
 
-      // 敵の移動
+      // 敵の移動・攻撃処理
       for (let i = enemies.length - 1; i >= 0; i--) {
-        enemies[i].x -= CONFIG.enemySpeed * dt;
-        enemies[i].phase += dt * 5;
-        enemies[i].y += Math.sin(enemies[i].phase) * 1.2;
+        const e = enemies[i];
+        e.x -= CONFIG.enemySpeed * dt;
+        e.phase += dt * 5;
+        e.y += Math.sin(e.phase) * 1.2;
 
-        if (enemies[i].x < -30) {
+        e.shootTimer += dt;
+        if (e.shootTimer >= CONFIG.enemyShootInterval && e.x < GAME_WIDTH - 50 && e.x > 100) {
+          e.shootTimer = 0;
+          const angle = Math.atan2(player.y - e.y, player.x - e.x);
+          enemyBullets.push({
+            x: e.x - e.radius,
+            y: e.y,
+            vx: Math.cos(angle) * CONFIG.enemyBulletSpeed,
+            vy: Math.sin(angle) * CONFIG.enemyBulletSpeed,
+            radius: 6
+          });
+          createBubbleBurst(e.x - e.radius, e.y, 5, 20, 60);
+        }
+
+        if (e.x < -30) {
           enemies.splice(i, 1);
         }
       }
 
-      // 当たり判定：弾 vs 敵
+      // 敵の攻撃弾の移動
+      for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const eb = enemyBullets[i];
+        eb.x += eb.vx * dt;
+        eb.y += eb.vy * dt;
+
+        if (eb.x < -20 || eb.x > GAME_WIDTH + 20 || eb.y < -20 || eb.y > GAME_HEIGHT + 20) {
+          enemyBullets.splice(i, 1);
+        }
+      }
+
+      // アイテムの移動
+      for (let i = items.length - 1; i >= 0; i--) {
+        const item = items[i];
+        item.x -= CONFIG.itemSpeed * dt;
+        item.phase += dt * 4;
+        item.y += Math.sin(item.phase) * 0.8;
+
+        if (item.x < -30) {
+          items.splice(i, 1);
+        }
+      }
+
+      // 当たり判定：プレイヤー弾 vs 敵
       for (let i = bullets.length - 1; i >= 0; i--) {
         for (let j = enemies.length - 1; j >= 0; j--) {
           const b = bullets[i];
@@ -561,31 +750,57 @@
           const dist = Math.hypot(b.x - e.x, b.y - e.y);
           if (dist < b.radius + e.radius) {
             createBubbleBurst(e.x, e.y, 20, 60, 180);
+            tryDropItem(e.x, e.y);
             bullets.splice(i, 1);
             enemies.splice(j, 1);
             hitCount++;
-            hitVal.innerText = hitCount;
+            document.getElementById('hitVal').innerText = hitCount;
             break;
           }
         }
       }
 
-      // 当たり判定：自機 vs 敵
-      for (let i = 0; i < enemies.length; i++) {
+      // 当たり判定：自機 vs アイテム
+      for (let i = items.length - 1; i >= 0; i--) {
+        const item = items[i];
+        const dist = Math.hypot(player.x - item.x, player.y - item.y);
+        if (dist < player.radius + item.radius) {
+          if (item.type === 'SHIELD') {
+            player.hasShield = true;
+          } else if (item.type === 'TRIPLE') {
+            player.tripleShotTimer = CONFIG.tripleShotDuration;
+          }
+          createBubbleBurst(item.x, item.y, 15, 50, 150);
+          items.splice(i, 1);
+        }
+      }
+
+      // 当たり判定：自機 vs 敵本体
+      for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         const dist = Math.hypot(player.x - e.x, player.y - e.y);
         if (dist < player.radius + e.radius) {
-          gameOver();
-          break;
+          enemies.splice(i, 1);
+          if (takeDamage()) return;
+        }
+      }
+
+      // 当たり判定：自機 vs 敵の攻撃弾
+      for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const eb = enemyBullets[i];
+        const dist = Math.hypot(player.x - eb.x, player.y - eb.y);
+        if (dist < player.radius + eb.radius) {
+          enemyBullets.splice(i, 1);
+          if (takeDamage()) return;
         }
       }
     }
 
     // ==========================================
-    // 描画処理 (豊かなグラデーション描写)
+    // 描画処理
     // ==========================================
     function draw() {
-      // 1. 背景：3段マルチカラーストップ縦グラデーション（浅瀬→深海）
+      // 1. 背景グラデーション
       const bgGrad = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
       bgGrad.addColorStop(0.0, CONFIG.bgColors[0]);
       bgGrad.addColorStop(0.5, CONFIG.bgColors[1]);
@@ -593,7 +808,7 @@
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-      // 2. 差し込む光の筋（淡いグラデーション光線）
+      // 2. 差し込む光
       ctx.save();
       const rayGrad = ctx.createLinearGradient(0, 0, GAME_WIDTH * 0.8, GAME_HEIGHT);
       rayGrad.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
@@ -618,7 +833,7 @@
       ctx.fill();
       ctx.restore();
 
-      // 3. 海底の海藻描画（根元〜穂先のグラデーション）
+      // 3. 海藻
       seaweeds.forEach(sw => {
         const time = Date.now() * 0.002;
         const flex = Math.sin(time + sw.phase) * 15;
@@ -638,7 +853,7 @@
         ctx.stroke();
       });
 
-      // 4. 海底の岩場・砂地（深海グラデーション）
+      // 4. 地形
       const seabedGrad = ctx.createLinearGradient(0, GAME_HEIGHT - 60, 0, GAME_HEIGHT);
       seabedGrad.addColorStop(0, '#0c3552');
       seabedGrad.addColorStop(1, '#020b14');
@@ -650,7 +865,7 @@
       ctx.closePath();
       ctx.fill();
 
-      // 5. 環境泡（ラジアルグラデーションで立体感と輝き）
+      // 5. 環境泡
       bgBubbles.forEach(b => {
         const bubbleGrad = ctx.createRadialGradient(
           b.x - b.radius * 0.3, b.y - b.radius * 0.3, b.radius * 0.1,
@@ -669,7 +884,7 @@
         ctx.stroke();
       });
 
-      // 6. アクション泡の描画
+      // 6. アクション泡
       actionBubbles.forEach(ab => {
         ctx.strokeStyle = `rgba(0, 243, 255, ${ab.alpha * 0.8})`;
         ctx.fillStyle = `rgba(220, 255, 255, ${ab.alpha * 0.4})`;
@@ -681,7 +896,32 @@
       });
 
       if (gameState === 'PLAYING' || gameState === 'GAMEOVER') {
-        // 7. 魚雷（バブル＆エネルギー発光グラデーション）
+        // 7. ドロップアイテム
+        items.forEach(item => {
+          ctx.save();
+          const isShield = item.type === 'SHIELD';
+          const mainColor = isShield ? '#00ffff' : '#76ff03';
+          
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = mainColor;
+          
+          ctx.fillStyle = 'rgba(2, 12, 27, 0.8)';
+          ctx.strokeStyle = mainColor;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 14px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(isShield ? '🛡️' : '⚡', item.x, item.y);
+          ctx.restore();
+        });
+
+        // 8. プレイヤー魚雷
         bullets.forEach(b => {
           const bulletGrad = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.radius);
           bulletGrad.addColorStop(0, '#ffffff');
@@ -696,7 +936,22 @@
           ctx.fill();
         });
 
-        // 8. 敵（深海生物：線形グラデーション＋発光）
+        // 9. 敵の攻撃弾
+        enemyBullets.forEach(eb => {
+          const ebGrad = ctx.createRadialGradient(eb.x, eb.y, 0, eb.x, eb.y, eb.radius);
+          ebGrad.addColorStop(0, '#ffffff');
+          ebGrad.addColorStop(0.4, CONFIG.enemyBulletGradient[0]);
+          ebGrad.addColorStop(1, CONFIG.enemyBulletGradient[1]);
+
+          ctx.fillStyle = ebGrad;
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = CONFIG.enemyBulletGradient[0];
+          ctx.beginPath();
+          ctx.arc(eb.x, eb.y, eb.radius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // 10. 敵（深海生物）
         enemies.forEach(e => {
           const enemyGrad = ctx.createLinearGradient(e.x - e.radius, e.y, e.x + e.radius, e.y);
           enemyGrad.addColorStop(0, CONFIG.enemyGradient[0]);
@@ -706,18 +961,17 @@
           ctx.shadowBlur = 12;
           ctx.shadowColor = CONFIG.enemyGradient[0];
 
-          // 魚の体
           ctx.beginPath();
           ctx.ellipse(e.x, e.y, e.radius, e.radius * 0.7, 0, 0, Math.PI * 2);
           ctx.fill();
-          // 尾びれ
+
           ctx.beginPath();
           ctx.moveTo(e.x + e.radius * 0.8, e.y);
           ctx.lineTo(e.x + e.radius * 1.6, e.y - e.radius * 0.6);
           ctx.lineTo(e.x + e.radius * 1.6, e.y + e.radius * 0.6);
           ctx.closePath();
           ctx.fill();
-          // つぶらな目（ハイライト付き）
+
           ctx.shadowBlur = 0;
           ctx.fillStyle = '#ffffff';
           ctx.beginPath();
@@ -729,7 +983,7 @@
           ctx.fill();
         });
 
-        // 9. 潜水艦（自機：金属質感グラデーション＆サーチライト）
+        // 11. 潜水艦（自機）
         const pGrad = ctx.createLinearGradient(player.x - player.radius, player.y - player.radius, player.x + player.radius, player.y + player.radius);
         pGrad.addColorStop(0, CONFIG.playerGradient[0]);
         pGrad.addColorStop(1, CONFIG.playerGradient[1]);
@@ -738,15 +992,12 @@
         ctx.shadowBlur = 15;
         ctx.shadowColor = CONFIG.playerGradient[0];
 
-        // 潜水艦本体
         ctx.beginPath();
         ctx.ellipse(player.x, player.y, player.radius * 1.2, player.radius * 0.75, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // 潜望鏡
         ctx.fillRect(player.x - 6, player.y - player.radius - 2, 12, 10);
 
-        // 窓（グラデーション発光）
         const windowGrad = ctx.createRadialGradient(player.x + 8, player.y - 2, 0, player.x + 8, player.y - 2, 5);
         windowGrad.addColorStop(0, '#ffffff');
         windowGrad.addColorStop(1, '#00ffff');
@@ -755,7 +1006,18 @@
         ctx.arc(player.x + 8, player.y - 2, 5, 0, Math.PI * 2);
         ctx.fill();
 
-        // 前方サーチライトの照射光（円錐グラデーション）
+        // バリア（水流シールド）エフェクト描画
+        if (player.hasShield) {
+          ctx.strokeStyle = '#00ffff';
+          ctx.shadowColor = '#00ffff';
+          ctx.shadowBlur = 20;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(player.x, player.y, player.radius * 1.6, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // サーチライト
         const lightGrad = ctx.createLinearGradient(player.x + player.radius, player.y, player.x + player.radius + 150, player.y);
         lightGrad.addColorStop(0, 'rgba(0, 255, 255, 0.4)');
         lightGrad.addColorStop(1, 'rgba(0, 255, 255, 0.0)');
@@ -785,7 +1047,6 @@
       requestAnimationFrame(gameLoop);
     }
 
-    // ループ開始
     requestAnimationFrame(gameLoop);
   </script>
 </body>

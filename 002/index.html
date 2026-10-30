@@ -247,7 +247,7 @@
         <div class="instruction-card">
           <p>【操作方法】</p>
           <p>・画面上下ドラッグ：魔法使いの移動</p>
-          <p>・FIREボタン / 画面タップ：魔法弾を発射</p>
+          <p>・FIREボタン / 画面タップ：3方向の魔法弾を発射</p>
           <p>・PC操作：[Space]キーで魔法弾発射 / [↑][↓]キーで移動</p>
         </div>
         <div class="btn-group">
@@ -285,7 +285,7 @@
 
   <script>
     // ============================================================
-    // CONFIG: ゲームパラメータ設定（授業でここを書き換えてカスタマイズ！）
+    // CONFIG: ゲームパラメータ設定
     // ============================================================
     const CONFIG = {
       title: "MAGIC SHOT",            // タイトル名
@@ -295,6 +295,7 @@
       enemySpeed: 210,                // ゴーストの移動速度 (px/秒)
       enemySpawnInterval: 1.0,       // ゴーストの出現間隔 (秒)
       bulletSpeed: 750,               // 魔法弾の速度 (px/秒)
+      bulletAngle: 15 * (Math.PI / 180), // 3方向ショットの拡散角度（15度）
       playerSpeed: 14,                // 移動の追従レスポンス速度
       canvasWidth: 960,               // ゲーム世界の横幅
       canvasHeight: 540               // ゲーム世界の高さ
@@ -463,15 +464,23 @@
       targetPlayerY = Math.max(25, Math.min(CONFIG.canvasHeight - 25, gameY));
     }
 
-    // 魔法弾の発射
+    // 3方向魔法弾の発射
     function shootBullet() {
-      bullets.push({
-        x: player.x + 25,
-        y: player.y - 2,
-        radius: 8
+      const speed = CONFIG.bulletSpeed;
+      const angle = CONFIG.bulletAngle;
+      const angles = [0, -angle, angle];
+
+      angles.forEach(a => {
+        bullets.push({
+          x: player.x + 25,
+          y: player.y - 2,
+          vx: speed * Math.cos(a),
+          vy: speed * Math.sin(a),
+          radius: 7
+        });
       });
-      // 発射時のプチ演出
-      createMagicTrail(player.x + 25, player.y - 2, '#ffd700', 5);
+
+      createMagicTrail(player.x + 25, player.y - 2, '#ffd700', 6);
     }
 
     // ============================================================
@@ -574,11 +583,20 @@
         if (sp.x < 0) sp.x = CONFIG.canvasWidth;
       });
 
-      // 弾の移動
+      // 弾の移動 & 画面外判定
       for (let i = bullets.length - 1; i >= 0; i--) {
         let b = bullets[i];
-        b.x += CONFIG.bulletSpeed * dt;
-        if (b.x > CONFIG.canvasWidth + 20) bullets.splice(i, 1);
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+
+        if (
+          b.x > CONFIG.canvasWidth + 20 ||
+          b.x < -20 ||
+          b.y < -20 ||
+          b.y > CONFIG.canvasHeight + 20
+        ) {
+          bullets.splice(i, 1);
+        }
       }
 
       // ゴースト（敵）の生成
@@ -645,10 +663,10 @@
     }
 
     // ============================================================
-    // 描画処理 (夜空、月、キャラクター、ゴースト、魔法)
+    // 描画処理
     // ============================================================
     function renderGame() {
-      // 1. 夜空のグラデーション背景
+      // 1. 夜空背景
       const bgGrad = ctx.createLinearGradient(0, 0, 0, CONFIG.canvasHeight);
       bgGrad.addColorStop(0, '#0a081a');
       bgGrad.addColorStop(0.5, '#160d2e');
@@ -656,7 +674,7 @@
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
 
-      // 2. 綺麗な三日月の描画
+      // 2. 三日月
       ctx.save();
       ctx.beginPath();
       ctx.arc(810, 95, 42, -Math.PI * 0.3, Math.PI * 0.6, false);
@@ -668,7 +686,7 @@
       ctx.fill();
       ctx.restore();
 
-      // 3. 背景の遠い星たち
+      // 3. 背景の星
       ctx.fillStyle = '#ffffff';
       bgStars.forEach(s => {
         ctx.globalAlpha = s.size / 3;
@@ -676,7 +694,7 @@
       });
       ctx.globalAlpha = 1.0;
 
-      // 4. 背景のキラキラ演出（輝く星）
+      // 4. キラキラ演出
       sparkles.forEach(sp => {
         ctx.save();
         const alpha = 0.4 + Math.sin(sp.phase) * 0.35;
@@ -688,12 +706,11 @@
         ctx.restore();
       });
 
-      // 5. 魔法弾の描画
+      // 5. 魔法弾
       bullets.forEach(b => {
         ctx.save();
         ctx.translate(b.x, b.y);
 
-        // 外側の輝き
         ctx.beginPath();
         ctx.arc(0, 0, b.radius + 3, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
@@ -701,14 +718,13 @@
         ctx.shadowBlur = 15;
         ctx.fill();
 
-        // 芯の星形
         ctx.fillStyle = '#ffffff';
         drawStar4(ctx, 0, 0, b.radius + 2);
 
         ctx.restore();
       });
 
-      // 6. 敵（ゴースト）の描画
+      // 6. 敵（ゴースト）
       enemies.forEach(e => {
         ctx.save();
         const floatY = Math.sin(e.floatPhase) * 4;
@@ -716,11 +732,9 @@
 
         const r = e.radius;
 
-        // ゴーストの体（波打つ裾）
         ctx.beginPath();
         ctx.arc(0, -r * 0.2, r * 0.85, Math.PI, 0, false);
         ctx.lineTo(r * 0.85, r * 0.6);
-        // 3つのうねり裾
         ctx.quadraticCurveTo(r * 0.55, r * 1.0, r * 0.28, r * 0.6);
         ctx.quadraticCurveTo(0, r * 0.2, -r * 0.28, r * 0.6);
         ctx.quadraticCurveTo(-r * 0.55, r * 1.0, -r * 0.85, r * 0.6);
@@ -731,21 +745,18 @@
         ctx.shadowBlur = 14;
         ctx.fill();
 
-        // 目
         ctx.fillStyle = '#100a26';
         ctx.beginPath();
         ctx.arc(-r * 0.3, -r * 0.2, r * 0.16, 0, Math.PI * 2);
         ctx.arc(r * 0.12, -r * 0.2, r * 0.16, 0, Math.PI * 2);
         ctx.fill();
 
-        // つぶらなハイライト
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.arc(-r * 0.34, -r * 0.26, r * 0.06, 0, Math.PI * 2);
         ctx.arc(r * 0.08, -r * 0.26, r * 0.06, 0, Math.PI * 2);
         ctx.fill();
 
-        // ほんのり赤いほっぺ
         ctx.fillStyle = '#ff4081';
         ctx.globalAlpha = 0.5;
         ctx.beginPath();
@@ -756,7 +767,7 @@
         ctx.restore();
       });
 
-      // 7. パーティクルの描画
+      // 7. パーティクル
       particles.forEach(p => {
         ctx.save();
         ctx.globalAlpha = Math.max(0, p.alpha);
@@ -769,12 +780,11 @@
         ctx.restore();
       });
 
-      // 8. 魔法使い（自機）の描画
+      // 8. 魔法使い（自機）
       if (gameState === 'PLAYING') {
         ctx.save();
         ctx.translate(player.x, player.y);
 
-        // ほうきの毛（後ろ側）
         ctx.beginPath();
         ctx.moveTo(-18, 0);
         ctx.lineTo(-34, -9);
@@ -786,7 +796,6 @@
         ctx.shadowBlur = 4;
         ctx.fill();
 
-        // ほうきの柄
         ctx.lineWidth = 4;
         ctx.strokeStyle = '#8d6e63';
         ctx.lineCap = 'round';
@@ -795,7 +804,6 @@
         ctx.lineTo(24, -2);
         ctx.stroke();
 
-        // ローブ (服)
         ctx.beginPath();
         ctx.moveTo(8, -1);
         ctx.lineTo(-12, 11);
@@ -804,19 +812,16 @@
         ctx.fillStyle = CONFIG.playerColor;
         ctx.fill();
 
-        // 顔
         ctx.beginPath();
         ctx.arc(4, -8, 7, 0, Math.PI * 2);
         ctx.fillStyle = '#ffe0b2';
         ctx.fill();
 
-        // 魔法の帽子（ツバ）
         ctx.beginPath();
         ctx.ellipse(3, -11, 11, 3.5, -0.2, 0, Math.PI * 2);
         ctx.fillStyle = '#4a148c';
         ctx.fill();
 
-        // 魔法の帽子（トンガリ部分）
         ctx.beginPath();
         ctx.moveTo(-3, -12);
         ctx.lineTo(15, -28);
@@ -825,7 +830,6 @@
         ctx.fillStyle = '#6a1b9a';
         ctx.fill();
 
-        // 帽子のリボン飾り
         ctx.beginPath();
         ctx.arc(3, -11, 3, 0, Math.PI * 2);
         ctx.fillStyle = '#ffd700';
@@ -843,7 +847,7 @@
       let dt = (timestamp - lastTime) / 1000;
       lastTime = timestamp;
 
-      if (dt > 0.1) dt = 0.1; // 処理落ち時の飛躍防止
+      if (dt > 0.1) dt = 0.1;
 
       if (gameState === 'PLAYING' && !isPausedForPortrait) {
         updateGame(dt);
@@ -853,7 +857,6 @@
       requestAnimationFrame(gameLoop);
     }
 
-    // 開始
     window.addEventListener('load', init);
   </script>
 </body>

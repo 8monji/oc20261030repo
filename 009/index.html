@@ -19,7 +19,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #050510;
+            background-color: #051005;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
@@ -40,8 +40,8 @@
         /* ゲーム用キャンバス */
         canvas {
             display: block;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
-            background-color: #080818;
+            box-shadow: 0 0 20px rgba(0, 255, 100, 0.2);
+            background-color: #0d200d;
         }
 
         /* === UIオーバーレイ（タイトル・UI画面） === */
@@ -71,7 +71,7 @@
         }
 
         .instructions {
-            background: rgba(40, 40, 0, 0.7);
+            background: rgba(10, 30, 10, 0.85);
             border: 1px solid #ffea00;
             border-radius: 10px;
             padding: 15px 25px;
@@ -132,7 +132,7 @@
             font-size: 1.2rem;
             font-weight: bold;
             color: #fff;
-            text-shadow: 0 0 5px #ffea00;
+            text-shadow: 0 0 5px #ffea00, 1px 1px 2px #000;
         }
 
         #score-display { left: 20px; }
@@ -185,7 +185,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(5, 5, 15, 0.95);
+            background-color: rgba(5, 15, 5, 0.95);
             display: none;
             flex-direction: column;
             justify-content: center;
@@ -260,7 +260,7 @@
         // =========================================================
         const CONFIG = {
             titleText: "ピカチュウ・シューティング", // ゲームのタイトル
-            bgColor: "#080818",             // 背景色
+            bgColor: "#0a1d0a",             // 森のベース夜景色
             enemySpeed: 200,                // 敵の移動速度（ピクセル/秒）
             enemySpawnInterval: 1.0,        // 敵の出現間隔（秒）
             bulletSpeed: 800,               // 弾（雷）の飛ぶ速度（ピクセル/秒）
@@ -308,12 +308,25 @@
         let enemySpawnTimer = 0;
         let screamTimer = null;
 
+        // 背景用の木（ランダム生成）
+        let forestTrees = [];
+        for (let i = 0; i < 30; i++) {
+            forestTrees.push({
+                x: Math.random() * GAME_WIDTH,
+                y: 100 + Math.random() * (GAME_HEIGHT - 120),
+                scale: 0.6 + Math.random() * 0.8,
+                color: `rgb(${10 + Math.floor(Math.random() * 20)}, ${40 + Math.floor(Math.random() * 40)}, ${15 + Math.floor(Math.random() * 25)})`,
+                layer: Math.floor(Math.random() * 2)
+            });
+        }
+        forestTrees.sort((a, b) => a.layer - b.layer);
+
         // ゲームオブジェクト
         let player = {
             x: 100,
             y: GAME_HEIGHT / 2,
             targetY: GAME_HEIGHT / 2,
-            radius: 22 // 当たり判定用
+            radius: 22
         };
 
         let bullets = [];
@@ -327,14 +340,12 @@
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
 
-            // 縦横比の判定（ portrait_warning 表示切り替え ）
             if (windowHeight > windowWidth) {
                 portraitWarning.style.display = 'flex';
             } else {
                 portraitWarning.style.display = 'none';
             }
 
-            // 16:9 の比率で最大のサイズを計算
             let w = windowWidth;
             let h = windowWidth * (9 / 16);
 
@@ -343,11 +354,9 @@
                 w = windowHeight * (16 / 9);
             }
 
-            // Canvas要素の表示サイズを設定
             canvas.style.width = `${w}px`;
             canvas.style.height = `${h}px`;
 
-            // スケールとオフセットを記録（タッチ位置変換用）
             scale = w / GAME_WIDTH;
             const rect = canvas.getBoundingClientRect();
             offsetX = rect.left;
@@ -360,8 +369,6 @@
         // =========================================================
         // 入力処理（タッチ座標変換・キーボード対応）
         // =========================================================
-
-        // 画面座標（スクリーンのpx）をゲーム内座標（960x540）に変換
         function screenToGamePos(clientX, clientY) {
             return {
                 x: (clientX - offsetX) / scale,
@@ -369,16 +376,13 @@
             };
         }
 
-        // ポインター（マウス・タッチ）ドラッグによるY座標設定
         let isDragging = false;
 
         function handlePointerMove(clientX, clientY) {
             const pos = screenToGamePos(clientX, clientY);
-            // 自機を上下範囲（画面内）に制限
             player.targetY = Math.max(30, Math.min(GAME_HEIGHT - 30, pos.y));
         }
 
-        // キャンバス上のタッチ・マウスイベントハンドラ
         canvas.addEventListener('pointerdown', (e) => {
             if (gameState !== 'PLAYING') return;
             isDragging = true;
@@ -395,7 +399,6 @@
         window.addEventListener('pointerup', () => { isDragging = false; });
         window.addEventListener('pointercancel', () => { isDragging = false; });
 
-        // FIREボタン用の個別の発射イベント
         fireBtn.addEventListener('pointerdown', (e) => {
             e.stopPropagation();
             if (gameState === 'PLAYING') {
@@ -403,7 +406,6 @@
             }
         });
 
-        // キーボード対応（スペースキーで発射）
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space' && gameState === 'PLAYING') {
                 shootBullet();
@@ -426,8 +428,6 @@
         // =========================================================
         // ゲームロジック
         // =========================================================
-
-        // 雷（弾）発射
         function shootBullet() {
             bullets.push({
                 x: player.x + 25,
@@ -438,7 +438,6 @@
             });
         }
 
-        // 敵（人間）の生成
         function spawnEnemy() {
             enemies.push({
                 x: GAME_WIDTH + 30,
@@ -448,7 +447,6 @@
             });
         }
 
-        // 叫び声ログの表示
         function triggerScream() {
             screamLog.style.opacity = '1';
             if (screamTimer) clearTimeout(screamTimer);
@@ -457,8 +455,25 @@
             }, 600);
         }
 
-        // 爆発パーティクル生成
-        function createExplosion(x, y, color, count = 12) {
+        // 血飛沫（一瞬で消える演出）
+        function createBloodExplosion(x, y, count = 25) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 80 + Math.random() * 200;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 0.15 + Math.random() * 0.1, // 約0.15～0.25秒で高速消滅
+                    maxLife: 0.25,
+                    color: Math.random() > 0.2 ? "#cc0000" : "#ff2222",
+                    size: 2.5 + Math.random() * 3.5
+                });
+            }
+        }
+
+        function createExplosion(x, y, color, count = 20) {
             for (let i = 0; i < count; i++) {
                 const angle = Math.random() * Math.PI * 2;
                 const speed = 50 + Math.random() * 150;
@@ -475,7 +490,6 @@
             }
         }
 
-        // ゲームスタート / リセット
         function startGame() {
             gameState = 'PLAYING';
             survivalTime = 0;
@@ -498,7 +512,6 @@
             lastTime = performance.now();
         }
 
-        // ゲームオーバー
         function gameOver() {
             gameState = 'GAMEOVER';
             createExplosion(player.x, player.y, "#ffff00", 30);
@@ -510,7 +523,6 @@
             gameoverScreen.style.display = 'flex';
         }
 
-        // イベントボタン登録
         document.getElementById('start-btn').addEventListener('click', startGame);
         document.getElementById('retry-btn').addEventListener('click', startGame);
 
@@ -520,21 +532,17 @@
         function update(dt) {
             if (gameState !== 'PLAYING') return;
 
-            // 生存時間の加算
             survivalTime += dt;
             timeCountEl.textContent = survivalTime.toFixed(1);
 
-            // ピカチュウの移動
             player.y += (player.targetY - player.y) * CONFIG.playerFollowSpeed * dt;
 
-            // 敵の出現タイマー
             enemySpawnTimer += dt;
             if (enemySpawnTimer >= CONFIG.enemySpawnInterval) {
                 spawnEnemy();
                 enemySpawnTimer = 0;
             }
 
-            // 雷（弾）の移動
             for (let i = bullets.length - 1; i >= 0; i--) {
                 bullets[i].x += bullets[i].speed * dt;
                 if (bullets[i].x > GAME_WIDTH + 50) {
@@ -542,18 +550,15 @@
                 }
             }
 
-            // 敵（人間）の移動と当たり判定
             for (let i = enemies.length - 1; i >= 0; i--) {
                 let e = enemies[i];
                 e.x -= e.speed * dt;
 
-                // 画面左外に消えた場合
                 if (e.x < -e.radius) {
                     enemies.splice(i, 1);
                     continue;
                 }
 
-                // 自機（ピカチュウ）との当たり判定
                 const dxPlayer = e.x - player.x;
                 const dyPlayer = e.y - player.y;
                 const distPlayer = Math.hypot(dxPlayer, dyPlayer);
@@ -562,7 +567,6 @@
                     return;
                 }
 
-                // 弾と敵の当たり判定
                 for (let j = bullets.length - 1; j >= 0; j--) {
                     let b = bullets[j];
                     const dxBullet = e.x - b.x;
@@ -570,19 +574,17 @@
                     const distBullet = Math.hypot(dxBullet, dyBullet);
 
                     if (distBullet < e.radius + b.radius) {
-                        // 撃破！
-                        createExplosion(e.x, e.y, "#ffcc00");
+                        createBloodExplosion(e.x, e.y);
                         enemies.splice(i, 1);
                         bullets.splice(j, 1);
                         hitCount++;
                         hitCountEl.textContent = hitCount;
-                        triggerScream(); // 左下に「うわあああああああああ！！！！！！！」を表示
+                        triggerScream();
                         break;
                     }
                 }
             }
 
-            // パーティクルの更新
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
                 p.x += p.vx * dt;
@@ -598,19 +600,43 @@
         // 描画処理 (Render) - Canvasグラフィック
         // =========================================================
         function draw() {
-            // 背景クリア
-            ctx.fillStyle = CONFIG.bgColor;
+            let bgGrad = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+            bgGrad.addColorStop(0, "#050f05");
+            bgGrad.addColorStop(0.6, "#0a200a");
+            bgGrad.addColorStop(1, "#030a03");
+            ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-            // 背景の星
-            ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-            for (let i = 0; i < 20; i++) {
-                let starX = (Math.sin(i * 99 + performance.now() * 0.0005) * 0.5 + 0.5) * GAME_WIDTH;
-                let starY = (Math.cos(i * 33) * 0.5 + 0.5) * GAME_HEIGHT;
-                ctx.fillRect(starX, starY, 2, 2);
+            ctx.fillStyle = "rgba(180, 255, 180, 0.2)";
+            for (let i = 0; i < 15; i++) {
+                let starX = (Math.sin(i * 77 + performance.now() * 0.0003) * 0.5 + 0.5) * GAME_WIDTH;
+                let starY = (Math.cos(i * 21) * 0.5 + 0.5) * GAME_HEIGHT;
+                ctx.fillRect(starX, starY, 3, 3);
             }
 
-            // 弾（稲妻・雷）の描画
+            forestTrees.forEach(t => {
+                ctx.save();
+                ctx.fillStyle = t.color;
+                
+                ctx.fillRect(t.x - 6 * t.scale, t.y, 12 * t.scale, 80 * t.scale);
+                
+                ctx.beginPath();
+                ctx.moveTo(t.x, t.y - 70 * t.scale);
+                ctx.lineTo(t.x - 30 * t.scale, t.y - 20 * t.scale);
+                ctx.lineTo(t.x + 30 * t.scale, t.y - 20 * t.scale);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(t.x, t.y - 45 * t.scale);
+                ctx.lineTo(t.x - 38 * t.scale, t.y + 10 * t.scale);
+                ctx.lineTo(t.x + 38 * t.scale, t.y + 10 * t.scale);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+            });
+
             ctx.save();
             ctx.strokeStyle = "#ffff00";
             ctx.fillStyle = "#ffffff";
@@ -625,14 +651,12 @@
                 ctx.lineTo(b.x, b.y);
                 ctx.stroke();
 
-                // 雷の先端の光
                 ctx.beginPath();
                 ctx.arc(b.x, b.y, 3, 0, Math.PI * 2);
                 ctx.fill();
             });
             ctx.restore();
 
-            // 敵（人間のグラフィック）の描画
             ctx.save();
             enemies.forEach(e => {
                 ctx.strokeStyle = "#ff4444";
@@ -641,22 +665,18 @@
                 ctx.shadowColor = "#ff0000";
                 ctx.shadowBlur = 8;
 
-                // 頭部
                 ctx.beginPath();
                 ctx.arc(e.x, e.y - 12, 8, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
 
-                // 胴体
                 ctx.beginPath();
                 ctx.moveTo(e.x, e.y - 4);
                 ctx.lineTo(e.x, e.y + 12);
                 
-                // 腕
                 ctx.moveTo(e.x - 10, e.y + 2);
                 ctx.lineTo(e.x + 10, e.y + 2);
 
-                // 脚
                 ctx.moveTo(e.x, e.y + 12);
                 ctx.lineTo(e.x - 8, e.y + 24);
                 ctx.moveTo(e.x, e.y + 12);
@@ -665,29 +685,23 @@
             });
             ctx.restore();
 
-            // 自機（ピカチュウ）の描画
             if (gameState === 'PLAYING' || gameState === 'TITLE') {
                 ctx.save();
                 ctx.translate(player.x, player.y);
 
-                // 発光エフェクト
                 ctx.shadowColor = "#ffea00";
                 ctx.shadowBlur = 10;
 
-                // 1. 体（黄色い丸）
                 ctx.fillStyle = "#ffea00";
                 ctx.beginPath();
                 ctx.arc(0, 0, 20, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 2. 耳（左・右）
-                // 左耳
                 ctx.beginPath();
                 ctx.moveTo(-10, -15);
                 ctx.lineTo(-22, -35);
                 ctx.lineTo(-2, -18);
                 ctx.fill();
-                // 左耳の先端（黒）
                 ctx.fillStyle = "#000000";
                 ctx.beginPath();
                 ctx.moveTo(-10, -15);
@@ -695,14 +709,12 @@
                 ctx.lineTo(-15, -28);
                 ctx.fill();
 
-                // 右耳
                 ctx.fillStyle = "#ffea00";
                 ctx.beginPath();
                 ctx.moveTo(5, -15);
                 ctx.lineTo(12, -38);
                 ctx.lineTo(15, -12);
                 ctx.fill();
-                // 右耳の先端（黒）
                 ctx.fillStyle = "#000000";
                 ctx.beginPath();
                 ctx.moveTo(8, -25);
@@ -710,13 +722,11 @@
                 ctx.lineTo(15, -12);
                 ctx.fill();
 
-                // 3. ほっぺた（赤）
                 ctx.fillStyle = "#ff0000";
                 ctx.beginPath();
                 ctx.arc(8, 6, 6, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 4. 目（黒＋白の光）
                 ctx.fillStyle = "#000000";
                 ctx.beginPath();
                 ctx.arc(10, -4, 4, 0, Math.PI * 2);
@@ -726,7 +736,6 @@
                 ctx.arc(11, -5, 1.5, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 5. ギザギザの尻尾（後ろ）
                 ctx.strokeStyle = "#ffea00";
                 ctx.lineWidth = 5;
                 ctx.beginPath();
@@ -739,10 +748,9 @@
                 ctx.restore();
             }
 
-            // 爆発パーティクルの描画
             particles.forEach(p => {
                 ctx.save();
-                ctx.globalAlpha = p.life / p.maxLife;
+                ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
                 ctx.fillStyle = p.color;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -764,7 +772,6 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // 初回呼び出しでゲームループ起動
         requestAnimationFrame((now) => {
             lastTime = now;
             gameLoop(now);

@@ -160,10 +160,467 @@
     <canvas id="gameCanvas" width="960" height="540"></canvas>
 
     <div id="hud">
-      TIME: <span id="time-val">0</span>s | HEAL: <span id="hit-val">0</span>人
+      TIME: <span id="time-val">0</span>s | HEAL: <span id="hit-val">0</span>人 | WAND: Lv.<span id="wand-val">1</span>
     </div>
 
     <div id="fire-btn">HEAL</div>
 
     <div id="title-screen" class="screen">
-      <h1 id="title-text">癒や
+      <h1 id="title-text">癒やしの魔女</h1>
+      <p>【操作方法】<br>上下ドラッグ（スワイプ）：魔女の移動<br>画面タップ / HEALボタン / スペースキー：癒やしの魔法<br>ケガ人を治して落ちてくる「杖」を集め、魔法をパワーアップ！</p>
+      <div class="btn-container">
+        <button id="start-btn">PLAY</button>
+        <button id="fullscreen-btn">FULL SCREEN</button>
+      </div>
+    </div>
+
+    <div id="gameover-screen" class="screen hidden">
+      <h1 style="color: #ff77aa; text-shadow: 0 0 10px #ff77aa;">GAME OVER</h1>
+      <p>ケガをした人とぶつかってしまいました！</p>
+      <p>TIME: <span id="final-time">0</span>s</p>
+      <p>HEAL: <span id="final-hit">0</span>人</p>
+      <p>WAND LEVEL: Lv.<span id="final-wand">1</span></p>
+      <div class="btn-container">
+        <button id="retry-btn">RETRY</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="orientation-warning" class="hidden">
+    📱 画面を横にして遊んでね！
+  </div>
+
+  <script>
+    // ==========================================
+    // カスタマイズ設定 (CONFIG)
+    // ==========================================
+    const CONFIG = {
+      title: "癒やしの魔女",              // タイトルテキスト
+      bgColor: "#12002b",               // 背景色
+      playerColor: "#e066ff",           // 魔女の色
+      patientColor: "#ff7777",          // ケガをした人の色
+      patientSpeed: 200,                // ケガ人の移動速度
+      patientInterval: 1.2,             // 出現間隔(秒)
+      magicSpeed: 750,                  // 魔法弾の速度
+      playerFollowSpeed: 12.0           // ドラッグ追従の滑らかさ
+    };
+
+    const container = document.getElementById('game-container');
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const titleText = document.getElementById('title-text');
+    const titleScreen = document.getElementById('title-screen');
+    const gameoverScreen = document.getElementById('gameover-screen');
+    const startBtn = document.getElementById('start-btn');
+    const retryBtn = document.getElementById('retry-btn');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const fireBtn = document.getElementById('fire-btn');
+    const timeVal = document.getElementById('time-val');
+    const hitVal = document.getElementById('hit-val');
+    const wandVal = document.getElementById('wand-val');
+    const finalTime = document.getElementById('final-time');
+    const finalHit = document.getElementById('final-hit');
+    const finalWand = document.getElementById('final-wand');
+    const orientationWarning = document.getElementById('orientation-warning');
+
+    titleText.textContent = CONFIG.title;
+    container.style.backgroundColor = CONFIG.bgColor;
+
+    let gameState = 'TITLE';
+    let lastTime = 0;
+    let elapsedTime = 0;
+    let hitCount = 0;
+    let wandLevel = 1;
+    let spawnTimer = 0;
+    let isTouching = false;
+    let targetPlayerY = 270;
+
+    const GAME_WIDTH = 960;
+    const GAME_HEIGHT = 540;
+
+    const player = {
+      x: 90,
+      y: 270,
+      width: 50,
+      height: 50,
+      color: CONFIG.playerColor
+    };
+
+    let magics = [];
+    let patients = [];
+    let wands = [];
+
+    function resizeGame() {
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+
+      if (windowHeight > windowWidth) {
+        orientationWarning.classList.remove('hidden');
+      } else {
+        orientationWarning.classList.add('hidden');
+      }
+
+      const scale = Math.min(windowWidth / GAME_WIDTH, windowHeight / GAME_HEIGHT);
+      container.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    }
+
+    window.addEventListener('resize', resizeGame);
+    window.addEventListener('orientationchange', resizeGame);
+    resizeGame();
+
+    function getGameCoordinates(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleY = GAME_HEIGHT / rect.height;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return (clientY - rect.top) * scaleY;
+    }
+
+    function startGame() {
+      gameState = 'PLAYING';
+      elapsedTime = 0;
+      hitCount = 0;
+      wandLevel = 1;
+      spawnTimer = 0;
+      magics = [];
+      patients = [];
+      wands = [];
+      player.y = 270;
+      targetPlayerY = 270;
+
+      timeVal.textContent = '0';
+      hitVal.textContent = '0';
+      wandVal.textContent = '1';
+
+      titleScreen.classList.add('hidden');
+      gameoverScreen.classList.add('hidden');
+    }
+
+    function castMagic() {
+      if (gameState !== 'PLAYING') return;
+
+      const baseRadius = 10 + (wandLevel * 2);
+
+      if (wandLevel === 1) {
+        magics.push({ x: player.x + 30, y: player.y, vy: 0, radius: baseRadius });
+      } else if (wandLevel === 2) {
+        magics.push({ x: player.x + 30, y: player.y - 12, vy: -60, radius: baseRadius });
+        magics.push({ x: player.x + 30, y: player.y + 12, vy: 60, radius: baseRadius });
+      } else {
+        magics.push({ x: player.x + 30, y: player.y, vy: 0, radius: baseRadius });
+        magics.push({ x: player.x + 30, y: player.y - 10, vy: -120, radius: baseRadius });
+        magics.push({ x: player.x + 30, y: player.y + 10, vy: 120, radius: baseRadius });
+      }
+    }
+
+    function spawnPatient() {
+      const size = 35;
+      const minY = size;
+      const maxY = GAME_HEIGHT - size;
+      const randomY = Math.random() * (maxY - minY) + minY;
+
+      patients.push({
+        x: GAME_WIDTH + size,
+        y: randomY,
+        width: size,
+        height: size,
+        color: CONFIG.patientColor
+      });
+    }
+
+    function handlePointerMove(e) {
+      if (gameState !== 'PLAYING') return;
+      targetPlayerY = getGameCoordinates(e);
+    }
+
+    function handlePointerStart(e) {
+      if (gameState !== 'PLAYING') return;
+      if (e.target !== fireBtn) {
+        isTouching = true;
+        targetPlayerY = getGameCoordinates(e);
+        castMagic();
+      }
+    }
+
+    function handlePointerEnd() {
+      isTouching = false;
+    }
+
+    window.addEventListener('mousedown', handlePointerStart);
+    window.addEventListener('mousemove', (e) => { if (isTouching || e.buttons === 1) handlePointerMove(e); });
+    window.addEventListener('mouseup', handlePointerEnd);
+
+    window.addEventListener('touchstart', handlePointerStart, { passive: false });
+    window.addEventListener('touchmove', handlePointerMove, { passive: false });
+    window.addEventListener('touchend', handlePointerEnd);
+
+    fireBtn.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      castMagic();
+    });
+    fireBtn.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      castMagic();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        castMagic();
+      }
+    });
+
+    startBtn.addEventListener('click', startGame);
+    retryBtn.addEventListener('click', startGame);
+
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        container.requestFullscreen().catch(err => {
+          alert("全画面表示に対応していません: " + err.message);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    function checkCollisionCircleRect(circle, rect) {
+      return (
+        circle.x - circle.radius < rect.x + rect.width / 2 &&
+        circle.x + circle.radius > rect.x - rect.width / 2 &&
+        circle.y - circle.radius < rect.y + rect.height / 2 &&
+        circle.y + circle.radius > rect.y - rect.height / 2
+      );
+    }
+
+    function checkCollisionRectRect(p1, p2) {
+      return (
+        p1.x - p1.width / 2 < p2.x + p2.width / 2 &&
+        p1.x + p1.width / 2 > p2.x - p2.width / 2 &&
+        p1.y - p1.height / 2 < p2.y + p2.height / 2 &&
+        p1.y + p1.height / 2 > p2.y - p2.height / 2
+      );
+    }
+
+    function triggerGameOver() {
+      gameState = 'GAMEOVER';
+      finalTime.textContent = Math.floor(elapsedTime);
+      finalHit.textContent = hitCount;
+      finalWand.textContent = wandLevel;
+      gameoverScreen.classList.remove('hidden');
+    }
+
+    function update(dt) {
+      if (gameState !== 'PLAYING') return;
+
+      elapsedTime += dt;
+      timeVal.textContent = Math.floor(elapsedTime);
+
+      player.y += (targetPlayerY - player.y) * CONFIG.playerFollowSpeed * dt;
+      player.y = Math.max(player.height / 2, Math.min(GAME_HEIGHT - player.height / 2, player.y));
+
+      spawnTimer += dt;
+      if (spawnTimer >= CONFIG.patientInterval) {
+        spawnPatient();
+        spawnTimer = 0;
+      }
+
+      for (let i = magics.length - 1; i >= 0; i--) {
+        magics[i].x += CONFIG.magicSpeed * dt;
+        magics[i].y += magics[i].vy * dt;
+        if (magics[i].x > GAME_WIDTH + 50) {
+          magics.splice(i, 1);
+        }
+      }
+
+      for (let i = patients.length - 1; i >= 0; i--) {
+        patients[i].x -= CONFIG.patientSpeed * dt;
+
+        if (checkCollisionRectRect(player, patients[i])) {
+          triggerGameOver();
+          return;
+        }
+
+        if (patients[i].x < -50) {
+          patients.splice(i, 1);
+        }
+      }
+
+      for (let i = wands.length - 1; i >= 0; i--) {
+        wands[i].x -= 80 * dt;
+
+        if (checkCollisionRectRect(player, wands[i])) {
+          if (wandLevel < 3) {
+            wandLevel++;
+            wandVal.textContent = wandLevel;
+          }
+          wands.splice(i, 1);
+          continue;
+        }
+
+        if (wands[i].x < -50) {
+          wands.splice(i, 1);
+        }
+      }
+
+      for (let i = magics.length - 1; i >= 0; i--) {
+        for (let j = patients.length - 1; j >= 0; j--) {
+          if (checkCollisionCircleRect(magics[i], patients[j])) {
+            wands.push({
+              x: patients[j].x,
+              y: patients[j].y,
+              width: 25,
+              height: 25
+            });
+
+            magics.splice(i, 1);
+            patients.splice(j, 1);
+            hitCount++;
+            hitVal.textContent = hitCount;
+            break;
+          }
+        }
+      }
+    }
+
+    // 魔女キャラクターの描画処理
+    function drawWitch(x, y) {
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#e066ff';
+
+      // 1. ほうき
+      ctx.strokeStyle = '#8b5a2b';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x - 32, y + 15);
+      ctx.lineTo(x + 24, y + 8);
+      ctx.stroke();
+
+      // ほうきの束（わら）
+      ctx.fillStyle = '#d2b48c';
+      ctx.beginPath();
+      ctx.moveTo(x - 32, y + 15);
+      ctx.lineTo(x - 48, y + 5);
+      ctx.lineTo(x - 48, y + 25);
+      ctx.closePath();
+      ctx.fill();
+
+      // 2. 魔女の体・ドレス
+      ctx.fillStyle = '#4a154b';
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y + 10);
+      ctx.lineTo(x + 10, y + 10);
+      ctx.lineTo(x + 2, y - 10);
+      ctx.lineTo(x - 8, y - 10);
+      ctx.closePath();
+      ctx.fill();
+
+      // 3. 顔（肌）
+      ctx.fillStyle = '#ffe0bd';
+      ctx.beginPath();
+      ctx.arc(x + 2, y - 12, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4. とんがり帽子
+      ctx.fillStyle = '#2b0938';
+      // 帽子のつば
+      ctx.beginPath();
+      ctx.ellipse(x + 2, y - 16, 16, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // 帽子のトンガリ
+      ctx.beginPath();
+      ctx.moveTo(x - 8, y - 17);
+      ctx.lineTo(x + 12, y - 17);
+      ctx.lineTo(x + 18, y - 38);
+      ctx.closePath();
+      ctx.fill();
+
+      // 帽子のリボン
+      ctx.fillStyle = '#ff007f';
+      ctx.fillRect(x - 5, y - 19, 14, 3);
+
+      // 5. 杖（手に持っている）
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x + 5, y);
+      ctx.lineTo(x + 26, y - 8);
+      ctx.stroke();
+
+      // 杖の先端の輝く星
+      ctx.fillStyle = '#00ffff';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#00ffff';
+      ctx.beginPath();
+      ctx.arc(x + 28, y - 9, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+      if (gameState === 'PLAYING' || gameState === 'GAMEOVER') {
+        // 自機（魔女）の描画
+        drawWitch(player.x, player.y);
+
+        // ドロップアイテム（魔法の杖）の描画
+        for (const w of wands) {
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = '#00ffff';
+
+          ctx.strokeStyle = '#ffd700';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(w.x - 8, w.y + 8);
+          ctx.lineTo(w.x + 6, w.y - 6);
+          ctx.stroke();
+
+          ctx.fillStyle = '#00ffff';
+          ctx.beginPath();
+          ctx.arc(w.x + 8, w.y - 8, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 癒やしの魔法弾の描画
+        ctx.fillStyle = '#ffff80';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ffff00';
+        for (const m of magics) {
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // ケガした人の描画
+        for (const p of patients) {
+          ctx.fillStyle = p.color;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = p.color;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.width / 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(p.x - 2, p.y - 8, 4, 16);
+          ctx.fillRect(p.x - 8, p.y - 2, 16, 4);
+        }
+
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function gameLoop(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
+      lastTime = timestamp;
+
+      update(dt);
+      render();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>

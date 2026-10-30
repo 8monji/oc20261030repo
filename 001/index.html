@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>東方風・参道弾幕絵巻</title>
+  <title>東方風・参道極弾幕絵巻</title>
   <style>
     /* =========================================================
        基本スタイル & レスポンシブ設定 (和風アニメテイスト)
@@ -20,11 +20,11 @@
     html, body {
       width: 100%;
       height: 100%;
-      background-color: #080312;
+      background-color: #06020c;
       color: #fff;
       font-family: 'Hiragino Mincho ProN', 'Yu Mincho', '游明朝', serif;
       overflow: hidden;
-      touch-action: none; /* スマホでのブラウザスクロールや拡大を防止 */
+      touch-action: none;
     }
 
     /* 全体を画面中央に配置するラッパー */
@@ -35,7 +35,7 @@
       justify-content: center;
       align-items: center;
       position: relative;
-      background: radial-gradient(circle, #180829 0%, #030108 100%);
+      background: radial-gradient(circle, #1c0a32 0%, #030108 100%);
     }
 
     /* 960x540 の固定ゲームワールドコンテナ */
@@ -45,9 +45,9 @@
       position: relative;
       overflow: hidden;
       background-color: #120826;
-      box-shadow: 0 0 50px rgba(255, 75, 92, 0.4), 0 0 100px rgba(18, 8, 38, 0.9);
+      box-shadow: 0 0 60px rgba(255, 42, 95, 0.5), 0 0 120px rgba(18, 8, 38, 0.9);
       border-radius: 12px;
-      border: 2px solid rgba(255, 215, 0, 0.4);
+      border: 2px solid rgba(255, 215, 0, 0.5);
       transform-origin: center center;
     }
 
@@ -81,7 +81,7 @@
 
     /* 和風アニメ風タイトルデザイン */
     .shrine-title {
-      font-size: 56px;
+      font-size: 54px;
       font-weight: 900;
       letter-spacing: 4px;
       color: #fff;
@@ -98,22 +98,22 @@
       font-weight: bold;
       color: #ffe600;
       text-shadow: 0 0 12px rgba(255, 230, 0, 0.9), 2px 2px 4px #000;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
     }
 
-    /* 和風ネオン風ボタン */
+    /* ボタンデザイン */
     .btn {
       background: linear-gradient(135deg, #d62828 0%, #800f2f 100%);
       border: 2px solid #ffe600;
       color: #ffffff;
-      padding: 14px 42px;
+      padding: 14px 44px;
       font-size: 22px;
       font-weight: bold;
       font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
       border-radius: 40px;
       cursor: pointer;
       box-shadow: 0 0 20px rgba(255, 75, 92, 0.6), inset 0 0 10px rgba(255, 230, 0, 0.4);
-      transition: all 0.25s ease;
+      transition: all 0.2s ease;
       margin: 8px;
       outline: none;
       text-shadow: 1px 1px 3px #000;
@@ -121,7 +121,7 @@
 
     .btn:hover, .btn:active {
       background: linear-gradient(135deg, #ff4b5c 0%, #c9184a 100%);
-      box-shadow: 0 0 30px rgba(255, 230, 0, 0.9), inset 0 0 15px #fff;
+      box-shadow: 0 0 35px rgba(255, 230, 0, 0.9), inset 0 0 15px #fff;
       transform: scale(1.06);
     }
 
@@ -133,7 +133,7 @@
       padding: 10px 28px;
     }
 
-    /* HUD (ゲーム画面上の情報表示) */
+    /* HUD (ゲーム情報表示) */
     #hud {
       position: absolute;
       top: 18px;
@@ -150,13 +150,52 @@
     }
 
     .hud-box {
-      background: rgba(18, 8, 38, 0.7);
-      padding: 6px 18px;
+      background: rgba(18, 8, 38, 0.75);
+      padding: 6px 20px;
       border-radius: 20px;
       border: 1px solid rgba(255, 230, 0, 0.5);
     }
 
-    /* 右下 FIRE ボタン (祓霊符風) */
+    /* ボスHPゲージ */
+    #boss-bar-wrapper {
+      position: absolute;
+      top: 55px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 520px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      z-index: 15;
+      pointer-events: none;
+    }
+
+    #boss-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #ffe600;
+      text-shadow: 0 0 10px #ff0055, 1px 1px 3px #000;
+      margin-bottom: 4px;
+    }
+
+    .boss-hp-bg {
+      width: 100%;
+      height: 16px;
+      background: rgba(18, 8, 38, 0.9);
+      border: 2px solid #ffe600;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 18px rgba(255, 42, 95, 0.8);
+    }
+
+    #boss-hp-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff0055 0%, #ff4b5c 50%, #ffe600 100%);
+      transition: width 0.08s linear;
+    }
+
+    /* 右下 FIRE ボタン */
     #fire-btn {
       position: absolute;
       bottom: 25px;
@@ -195,8 +234,8 @@
       margin-top: 15px;
       text-align: center;
       line-height: 1.7;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.55);
+      padding: 10px 22px;
       border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.15);
     }
@@ -237,7 +276,7 @@
   <div id="portrait-warning">
     <div class="icon">⛩️↻</div>
     <h2 style="font-size: 26px; color: #ffe600;">画面を横にしてね</h2>
-    <p style="margin-top: 12px; color: #b3a2c7;">スマートフォンを横向きにすると参道が開きます</p>
+    <p style="margin-top: 12px; color: #b3a2c7;">スマートフォンを横向きにすると結界が開きます</p>
   </div>
 
   <!-- ゲーム全体ラッパー -->
@@ -254,22 +293,30 @@
         <div class="hud-box">HIT: <span id="score-val" style="color: #ff4b5c;">0</span></div>
       </div>
 
+      <!-- ボス HP ゲージ表示 -->
+      <div id="boss-bar-wrapper">
+        <div id="boss-title">【大妖魔】 九尾の古妖狐</div>
+        <div class="boss-hp-bg">
+          <div id="boss-hp-fill"></div>
+        </div>
+      </div>
+
       <!-- タッチ用 FIRE ボタン -->
       <div id="fire-btn" class="interactive" style="display: none;">祓霊</div>
 
       <!-- タイトル画面 UI -->
       <div id="ui-title" class="ui-layer">
-        <h1 class="shrine-title" id="title-text">東方風・参道弾幕絵巻</h1>
-        <p class="shrine-subtitle" id="subtitle-text">〜 絢爛たる妖弾を避け祓え！本格和風弾幕戦 〜</p>
+        <h1 class="shrine-title" id="title-text">東方風・参道極弾幕絵巻</h1>
+        <p class="shrine-subtitle" id="subtitle-text">〜 咲き狂う妖弾を交わし祓え！極限弾幕結界戦 〜</p>
         
         <button id="start-btn" class="btn interactive">参拝開始 (PLAY)</button>
         <button id="fullscreen-btn" class="btn btn-secondary interactive">FULL SCREEN</button>
 
         <div class="controls-hint">
           【操作方法】<br>
-          自機移動：上下ドラッグ / 指でスライド / 矢印キー / [W][S]<br>
+          自機移動：上下ドラッグ / 指スライド / 矢印キー / [W][S]<br>
           破魔弾発射：画面タップ / [祓霊]ボタン / [SPACE]キー<br>
-          <span style="color: #ffe600;">※自機中心の赤い点（判定）に弾が当たると判定されます</span>
+          <span style="color: #ffe600;">※自機中心の「赤い極小点」に敵弾が触れると判定されます</span>
         </div>
       </div>
 
@@ -286,29 +333,31 @@
 
   <script>
     /* =========================================================
-       ★ 体験授業用 CONFIG オブジェクト (弾幕カスタマイズ) ★
+       ★ 体験授業用 CONFIG オブジェクト (超高密度弾幕パラメータ) ★
        ========================================================= */
     const CONFIG = {
       // --- 基本テキスト ---
-      TITLE: '東方風・参道弾幕絵巻',
-      SUBTITLE: '〜 絢爛たる妖弾を避け祓え！本格和風弾幕戦 〜',
+      TITLE: '東方風・参道極弾幕絵巻',
+      SUBTITLE: '〜 咲き狂う妖弾を交わし祓え！極限弾幕結界戦 〜',
 
       // --- テーマカラー ---
       BG_COLOR: '#120826',        // 夜の参道・背景ベース色
       PLAYER_COLOR: '#ff4b5c',    // 自機（式神のお札・朱色）
-      ENEMY_COLOR: '#00f0ff',     // 敵（鬼火・青緑の妖火）
       BULLET_COLOR: '#ffe600',    // 自機破魔弾（輝く黄色）
 
       // --- 弾幕・難易度設定 ---
-      ENEMY_SPEED: 2.2,           // 敵の出現移動スピード
-      SPAWN_INTERVAL: 1400,       // 敵の出現間隔 (ミリ秒)
-      BULLET_SPEED: 14,           // 自機破魔弾の飛行速度
-      FOLLOW_SPEED: 0.22,         // 自機の指/キー追従速度
+      ENEMY_SPEED: 2.0,           // 雑魚敵の出現移動スピード
+      SPAWN_INTERVAL: 1100,       // 雑魚敵の出現間隔 (ミリ秒)
+      BULLET_SPEED: 15,           // 自機破魔弾の飛行速度
+      FOLLOW_SPEED: 0.25,         // 自機の指/キー追従速度
       
       // 敵弾幕設定
-      ENEMY_BULLET_SPEED: 3.2,    // 敵弾の飛行速度
-      ENEMY_SHOOT_INTERVAL: 45,   // 敵の発射クールダウン(フレーム数)
-      BULLET_HELL_MODE: 1.0       // 弾幕密度係数
+      ENEMY_BULLET_SPEED: 3.0,    // 敵弾の標準飛行速度
+      ENEMY_SHOOT_INTERVAL: 32,   // 雑魚敵の発射クールダウン(フレーム数)
+
+      // --- ボス設定 ---
+      BOSS_INTERVAL: 30,          // ボス出現撃破数 (30体ごと)
+      BOSS_BASE_HP: 220           // ボスの耐久力
     };
 
     /* =========================================================
@@ -341,13 +390,13 @@
     let isPaused = false;
     let frameCount = 0;
 
-    // 自機（喰らい判定は半径 5px と極小にして避けやすくする）
+    // 自機（喰らい判定は半径 4.5px と極小にして超弾幕を避けやすくする）
     let player = { 
       x: 120, 
       y: 270, 
       targetY: 270, 
       visualRadius: 22,
-      hitRadius: 5 // 弾幕ゲー特有の極小判定
+      hitRadius: 4.5 // 弾幕ゲー特有の極小判定
     };
 
     // 配列管理
@@ -364,8 +413,11 @@
     let fireCooldown = 0;
     let keys = {};
 
-    document.getElementById('title-text').textContent = CONFIG.TITLE;
-    document.getElementById('subtitle-text').textContent = CONFIG.SUBTITLE;
+    // ボス管理変数
+    let boss = null;
+    let bossLevel = 1;
+    let nextBossKills = CONFIG.BOSS_INTERVAL;
+    let warningTimer = 0;
 
     /* ---------------------------------------------------------
        1. 画面リサイズ ＆ 座標系変換
@@ -398,19 +450,19 @@
     }
 
     /* ---------------------------------------------------------
-       2. 背景描画 (アニメ調・参道・神社・舞い散る桜)
+       2. 背景描画 (アニメ調・夜の参道・舞い散る桜)
        --------------------------------------------------------- */
     function initBackgroundElements() {
       petals = [];
-      for (let i = 0; i < 50; i++) {
+      for (let i = 0; i < 60; i++) {
         petals.push({
           x: Math.random() * GAME_WIDTH,
           y: Math.random() * GAME_HEIGHT,
           size: Math.random() * 5 + 4,
-          speedX: -(Math.random() * 2 + 1.5),
-          speedY: Math.random() * 1.2 + 0.6,
+          speedX: -(Math.random() * 2.2 + 1.2),
+          speedY: Math.random() * 1.4 + 0.5,
           angle: Math.random() * Math.PI * 2,
-          rotSpeed: (Math.random() - 0.5) * 0.05
+          rotSpeed: (Math.random() - 0.5) * 0.06
         });
       }
 
@@ -426,12 +478,12 @@
     }
 
     function drawBackground() {
-      // 空のグラデーション
+      // 空グラデーション
       const skyGradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
-      skyGradient.addColorStop(0.0, '#0a0318');
-      skyGradient.addColorStop(0.4, '#240a35');
-      skyGradient.addColorStop(0.7, '#571336');
-      skyGradient.addColorStop(0.88, '#9c2f42');
+      skyGradient.addColorStop(0.0, '#06020c');
+      skyGradient.addColorStop(0.35, '#1e082e');
+      skyGradient.addColorStop(0.7, '#4d1033');
+      skyGradient.addColorStop(0.88, '#8c253d');
       skyGradient.addColorStop(1.0, '#120826');
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
@@ -440,24 +492,24 @@
       ctx.save();
       const moonX = 780;
       const moonY = 110;
-      const moonGlow = ctx.createRadialGradient(moonX, moonY, 15, moonX, moonY, 110);
-      moonGlow.addColorStop(0, 'rgba(255, 255, 220, 0.9)');
-      moonGlow.addColorStop(0.3, 'rgba(255, 200, 140, 0.4)');
-      moonGlow.addColorStop(1, 'rgba(255, 180, 100, 0)');
+      const moonGlow = ctx.createRadialGradient(moonX, moonY, 15, moonX, moonY, 120);
+      moonGlow.addColorStop(0, 'rgba(255, 255, 220, 0.95)');
+      moonGlow.addColorStop(0.3, 'rgba(255, 190, 130, 0.45)');
+      moonGlow.addColorStop(1, 'rgba(255, 150, 80, 0)');
       ctx.fillStyle = moonGlow;
       ctx.beginPath();
-      ctx.arc(moonX, moonY, 110, 0, Math.PI * 2);
+      ctx.arc(moonX, moonY, 120, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#fffae6';
+      ctx.fillStyle = '#fffdf0';
       ctx.beginPath();
       ctx.arc(moonX, moonY, 38, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
-      // 遠景の山脈＆五重塔
+      // 遠景山脈＆五重塔
       ctx.save();
-      ctx.fillStyle = '#180828';
+      ctx.fillStyle = '#140622';
       ctx.beginPath();
       ctx.moveTo(0, 420);
       ctx.quadraticCurveTo(180, 330, 360, 390);
@@ -470,7 +522,7 @@
 
       const pagX = 700;
       const pagY = 325;
-      ctx.fillStyle = '#10041d';
+      ctx.fillStyle = '#0b0314';
       for (let i = 0; i < 5; i++) {
         const w = 36 - i * 5;
         const h = 12;
@@ -488,10 +540,10 @@
 
       // 参道床
       const groundY = 460;
-      ctx.fillStyle = '#1c0e31';
+      ctx.fillStyle = '#1a0c2e';
       ctx.fillRect(0, groundY, GAME_WIDTH, GAME_HEIGHT - groundY);
 
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.18)';
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.22)';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(0, groundY);
@@ -532,14 +584,14 @@
 
         ctx.save();
         ctx.translate(lan.x, groundY + 10);
-        ctx.fillStyle = '#292336';
+        ctx.fillStyle = '#251e30';
         ctx.fillRect(-8, -25, 16, 25);
         ctx.fillRect(-12, -30, 24, 6);
         ctx.fillStyle = '#ffe600';
         ctx.shadowBlur = 15;
         ctx.shadowColor = '#ffe600';
         ctx.fillRect(-7, -42, 14, 12);
-        ctx.fillStyle = '#1a1624';
+        ctx.fillStyle = '#161220';
         ctx.shadowBlur = 0;
         ctx.beginPath();
         ctx.moveTo(-16, -42);
@@ -578,20 +630,20 @@
     }
 
     /* ---------------------------------------------------------
-       3. パーティクル (爆発・消滅)
+       3. パーティクル (爆発・破片)
        --------------------------------------------------------- */
     function createExplosion(x, y, color, count = 22) {
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 7 + 2;
+        const speed = Math.random() * 7.5 + 2;
         particles.push({
           x: x,
           y: y,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
-          radius: Math.random() * 4 + 2,
+          radius: Math.random() * 4.5 + 2,
           alpha: 1.0,
-          color: color || CONFIG.ENEMY_COLOR
+          color: color || '#00f0ff'
         });
       }
     }
@@ -671,109 +723,203 @@
 
     function shootPlayerBullet() {
       if (fireCooldown <= 0) {
-        // 自機ショット：メイン弾2発＋上下拡散
-        playerBullets.push({ x: player.x + 25, y: player.y - 8, vx: CONFIG.BULLET_SPEED, vy: 0, radius: 6 });
-        playerBullets.push({ x: player.x + 25, y: player.y + 8, vx: CONFIG.BULLET_SPEED, vy: 0, radius: 6 });
-        playerBullets.push({ x: player.x + 20, y: player.y - 12, vx: CONFIG.BULLET_SPEED * 0.9, vy: -1.8, radius: 5 });
-        playerBullets.push({ x: player.x + 20, y: player.y + 12, vx: CONFIG.BULLET_SPEED * 0.9, vy: 1.8, radius: 5 });
+        // 自機ショット：扇状5WAY高火力破魔弾
+        const spd = CONFIG.BULLET_SPEED;
+        playerBullets.push({ x: player.x + 25, y: player.y - 8, vx: spd, vy: 0, radius: 6 });
+        playerBullets.push({ x: player.x + 25, y: player.y + 8, vx: spd, vy: 0, radius: 6 });
+        playerBullets.push({ x: player.x + 20, y: player.y - 12, vx: spd * 0.95, vy: -1.8, radius: 5 });
+        playerBullets.push({ x: player.x + 20, y: player.y + 12, vx: spd * 0.95, vy: 1.8, radius: 5 });
+        playerBullets.push({ x: player.x + 15, y: player.y - 16, vx: spd * 0.9, vy: -3.5, radius: 5 });
+        playerBullets.push({ x: player.x + 15, y: player.y + 16, vx: spd * 0.9, vy: 3.5, radius: 5 });
         
-        fireCooldown = 7; // 連射間隔
+        fireCooldown = 6;
       }
     }
 
     /* ---------------------------------------------------------
-       5. 弾幕生成ロジック (多種多様な高密度妖弾)
+       5. 雑魚敵 ＆ ボス 弾幕パターン生成エンジン
        --------------------------------------------------------- */
+
+    // 汎用：弾生成ヘルパー
+    function addEnemyBullet(x, y, vx, vy, type = 'circle', color = '#ff2a5f', glow = '#ff0055', radius = 6) {
+      if (enemyBullets.length > 600) return; // 処理負荷防止の上限ガード
+      enemyBullets.push({
+        x, y, vx, vy,
+        type,      // 'circle'(丸小弾), 'kunai'(クナイ針弾), 'big'(大玉), 'petal'(桜弾)
+        color,
+        glow,
+        radius,
+        angle: Math.atan2(vy, vx),
+        timer: 0
+      });
+    }
+
+    // A. 雑魚敵の多重弾幕パターン
     function spawnEnemyBulletPattern(enemy) {
-      const spd = CONFIG.ENEMY_BULLET_SPEED;
       const ex = enemy.x;
       const ey = enemy.y + Math.sin(enemy.floatOffset) * 12;
+      const baseAngle = Math.atan2(player.y - ey, player.x - ex);
 
-      // 弾幕パターン種別 (敵の種類ごとに決定)
-      switch (enemy.patternType) {
-        case 0: {
-          // ★ パターン1: 扇状5WAY〜7WAY 弾幕
-          const wayCount = 7;
-          const spreadAngle = Math.PI / 3.5; // 広がり角
-          const baseAngle = Math.atan2(player.y - ey, player.x - ex); // 自機方向
+      switch (enemy.type) {
+        case 0: { // 青緑の鬼火：広角 7WAY 扇状小丸弾 ＋ 中央狙撃クナイ
+          const count = 7;
+          const spread = Math.PI / 3.0;
+          for (let i = 0; i < count; i++) {
+            const ang = baseAngle - spread / 2 + (spread / (count - 1)) * i;
+            addEnemyBullet(ex, ey, Math.cos(ang) * 3.2, Math.sin(ang) * 3.2, 'circle', '#00f0ff', '#0088ff', 5);
+          }
+          // 中央高速針
+          addEnemyBullet(ex, ey, Math.cos(baseAngle) * 5.2, Math.sin(baseAngle) * 5.2, 'kunai', '#ffe600', '#ffaa00', 5);
+          break;
+        }
 
-          for (let i = 0; i < wayCount; i++) {
-            const angle = baseAngle - spreadAngle / 2 + (spreadAngle / (wayCount - 1)) * i;
-            enemyBullets.push({
-              x: ex,
-              y: ey,
-              vx: Math.cos(angle) * spd,
-              vy: Math.sin(angle) * spd,
-              radius: 6,
-              color: '#ff2a5f',
-              glow: '#ff0055'
-            });
+        case 1: { // 朱色の妖狐：交差連射ストリーム弾 (左右交互)
+          const side = (enemy.shootCount % 2 === 0) ? 1 : -1;
+          const ang = baseAngle + side * 0.25;
+          addEnemyBullet(ex, ey, Math.cos(ang) * 3.8, Math.sin(ang) * 3.8, 'kunai', '#ff2a5f', '#ff0055', 6);
+          addEnemyBullet(ex, ey, Math.cos(baseAngle) * 3.4, Math.sin(baseAngle) * 3.4, 'circle', '#ffa200', '#ff5500', 5);
+          break;
+        }
+
+        case 2: { // 紫のカラス天狗：全方位16連サークル弾
+          const count = 16;
+          const offsetAngle = enemy.shootCount * 0.15;
+          for (let i = 0; i < count; i++) {
+            const ang = (Math.PI * 2 / count) * i + offsetAngle;
+            addEnemyBullet(ex, ey, Math.cos(ang) * 2.8, Math.sin(ang) * 2.8, 'circle', '#a000ff', '#d000ff', 5.5);
           }
           break;
         }
 
-        case 1: {
-          // ★ パターン2: 全方位12連サークルリング弾
-          const ringCount = 12;
-          for (let i = 0; i < ringCount; i++) {
-            const angle = (Math.PI * 2 / ringCount) * i + (enemy.shootCount * 0.2);
-            enemyBullets.push({
-              x: ex,
-              y: ey,
-              vx: Math.cos(angle) * (spd * 0.85),
-              vy: Math.sin(angle) * (spd * 0.85),
-              radius: 5,
-              color: '#00f0ff',
-              glow: '#00aaff'
-            });
-          }
-          break;
-        }
-
-        case 2: {
-          // ★ パターン3: 旋回スパイラル螺旋弾幕 (高頻度連写)
-          const angle = (enemy.shootCount * 0.35);
-          enemyBullets.push({
-            x: ex,
-            y: ey,
-            vx: Math.cos(angle) * spd * 1.1,
-            vy: Math.sin(angle) * spd * 1.1,
-            radius: 7,
-            color: '#ffe600',
-            glow: '#ff9900'
-          });
-          enemyBullets.push({
-            x: ex,
-            y: ey,
-            vx: Math.cos(angle + Math.PI) * spd * 1.1,
-            vy: Math.sin(angle + Math.PI) * spd * 1.1,
-            radius: 7,
-            color: '#ffe600',
-            glow: '#ff9900'
-          });
-          break;
-        }
-
-        case 3: {
-          // ★ パターン4: 3連高速自機狙い狙撃弾
-          const baseAngle = Math.atan2(player.y - ey, player.x - ex);
-          for (let i = -1; i <= 1; i++) {
-            const angle = baseAngle + (i * 0.12);
-            enemyBullets.push({
-              x: ex,
-              y: ey,
-              vx: Math.cos(angle) * (spd * 1.3),
-              vy: Math.sin(angle) * (spd * 1.3),
-              radius: 8,
-              color: '#a000ff',
-              glow: '#d000ff'
-            });
+        case 3: { // 金色の妖怪大玉：低速巨大陰陽玉 ＋ 拡散桜花弁
+          addEnemyBullet(ex, ey, Math.cos(baseAngle) * 2.0, Math.sin(baseAngle) * 2.0, 'big', '#ffe600', '#ff8800', 14);
+          for (let i = 0; i < 6; i++) {
+            const ang = baseAngle + (Math.PI * 2 / 6) * i;
+            addEnemyBullet(ex, ey, Math.cos(ang) * 3.2, Math.sin(ang) * 3.2, 'petal', '#ffb7c5', '#ff2a5f', 7);
           }
           break;
         }
       }
 
       enemy.shootCount++;
+    }
+
+    // B. ボス（九尾の大妖魔）の5段階極高密度弾幕
+    function spawnBoss() {
+      bossLevel = Math.floor(score / CONFIG.BOSS_INTERVAL) || 1;
+      const maxHp = CONFIG.BOSS_BASE_HP + (bossLevel - 1) * 80;
+      boss = {
+        x: GAME_WIDTH + 120,
+        targetX: 720,
+        y: GAME_HEIGHT / 2,
+        radius: 54,
+        hp: maxHp,
+        maxHp: maxHp,
+        floatOffset: 0,
+        shootTimer: 0,
+        phaseTimer: 0,
+        name: `【第${bossLevel}関門】 九尾の大妖魔`
+      };
+      warningTimer = 140;
+
+      document.getElementById('boss-title').textContent = boss.name;
+      document.getElementById('boss-bar-wrapper').style.display = 'flex';
+      updateBossHpBar();
+    }
+
+    function updateBossHpBar() {
+      if (!boss) {
+        document.getElementById('boss-bar-wrapper').style.display = 'none';
+        return;
+      }
+      const pct = Math.max(0, (boss.hp / boss.maxHp) * 100);
+      document.getElementById('boss-hp-fill').style.width = pct + '%';
+    }
+
+    function updateBossShooting() {
+      if (!boss || boss.x > boss.targetX + 20) return;
+      boss.shootTimer++;
+      boss.phaseTimer++;
+
+      const hpRatio = boss.hp / boss.maxHp;
+      const ex = boss.x;
+      const ey = boss.y + Math.sin(boss.floatOffset) * 22;
+      const baseAngle = Math.atan2(player.y - ey, player.x - ex);
+
+      // ★ ボス形態1 (HP 100% ~ 80%): 多重カラフル全方位リング波
+      if (hpRatio >= 0.80) {
+        if (boss.shootTimer % 35 === 0) {
+          const count = 20;
+          const rot = boss.phaseTimer * 0.08;
+          for (let i = 0; i < count; i++) {
+            const ang = (Math.PI * 2 / count) * i + rot;
+            addEnemyBullet(ex, ey, Math.cos(ang) * 3.2, Math.sin(ang) * 3.2, 'circle', '#00f0ff', '#00aaff', 6);
+            addEnemyBullet(ex, ey, Math.cos(ang) * 2.2, Math.sin(ang) * 2.2, 'circle', '#ff2a5f', '#ff0055', 5);
+          }
+        }
+      }
+      // ★ ボス形態2 (HP 80% ~ 60%): 双方向高速回転スパイラル渦弾
+      else if (hpRatio >= 0.60) {
+        if (boss.shootTimer % 4 === 0) {
+          const ang1 = boss.phaseTimer * 0.22;
+          const ang2 = -boss.phaseTimer * 0.22;
+          addEnemyBullet(ex, ey, Math.cos(ang1) * 3.8, Math.sin(ang1) * 3.8, 'kunai', '#ffe600', '#ff9900', 6);
+          addEnemyBullet(ex, ey, Math.cos(ang1 + Math.PI) * 3.8, Math.sin(ang1 + Math.PI) * 3.8, 'kunai', '#ffe600', '#ff9900', 6);
+          
+          addEnemyBullet(ex, ey, Math.cos(ang2) * 3.2, Math.sin(ang2) * 3.2, 'circle', '#ff2a5f', '#ff0055', 5);
+          addEnemyBullet(ex, ey, Math.cos(ang2 + Math.PI) * 3.2, Math.sin(ang2 + Math.PI) * 3.2, 'circle', '#ff2a5f', '#ff0055', 5);
+        }
+      }
+      // ★ ボス形態3 (HP 60% ~ 40%): 咲き狂う桜花弁スターバースト (星型全方位拡散)
+      else if (hpRatio >= 0.40) {
+        if (boss.shootTimer % 40 === 0) {
+          const petalsCount = 24;
+          for (let i = 0; i < petalsCount; i++) {
+            const ang = (Math.PI * 2 / petalsCount) * i + (boss.phaseTimer * 0.12);
+            const speed = (i % 2 === 0) ? 3.6 : 2.2;
+            addEnemyBullet(ex, ey, Math.cos(ang) * speed, Math.sin(ang) * speed, 'petal', '#ffb7c5', '#ff2a5f', 7);
+          }
+        }
+        // 自機狙い高速クナイ
+        if (boss.shootTimer % 18 === 0) {
+          for (let i = -1; i <= 1; i++) {
+            const ang = baseAngle + i * 0.15;
+            addEnemyBullet(ex, ey, Math.cos(ang) * 5.0, Math.sin(ang) * 5.0, 'kunai', '#a000ff', '#d000ff', 6);
+          }
+        }
+      }
+      // ★ ボス形態4 (HP 40% ~ 20%): 低速巨大陰陽玉 ＋ 超高速針クナイ交差
+      else if (hpRatio >= 0.20) {
+        if (boss.shootTimer % 50 === 0) {
+          // 3連巨大玉
+          for (let i = -1; i <= 1; i++) {
+            const ang = baseAngle + i * 0.3;
+            addEnemyBullet(ex, ey, Math.cos(ang) * 1.8, Math.sin(ang) * 1.8, 'big', '#ffe600', '#ffaa00', 16);
+          }
+        }
+        if (boss.shootTimer % 6 === 0) {
+          const waveAng = Math.sin(boss.phaseTimer * 0.15) * 0.8 + baseAngle;
+          addEnemyBullet(ex, ey, Math.cos(waveAng) * 5.8, Math.sin(waveAng) * 5.8, 'kunai', '#00f0ff', '#00ffff', 5);
+        }
+      }
+      // ★ ボス形態5 (HP 20% ~ 0% 【発狂モード】): 猛烈全方位渦巻き ＋ 9WAY超連射扇状狙撃
+      else {
+        // 激しい全方位螺旋
+        if (boss.shootTimer % 3 === 0) {
+          const ang = boss.phaseTimer * 0.35;
+          addEnemyBullet(ex, ey, Math.cos(ang) * 3.5, Math.sin(ang) * 3.5, 'circle', '#ff0055', '#ff2a5f', 5);
+          addEnemyBullet(ex, ey, Math.cos(-ang) * 3.5, Math.sin(-ang) * 3.5, 'circle', '#ffe600', '#ffaa00', 5);
+        }
+        // 9WAY狙撃扇
+        if (boss.shootTimer % 28 === 0) {
+          const way = 9;
+          const spread = Math.PI / 2.2;
+          for (let i = 0; i < way; i++) {
+            const ang = baseAngle - spread / 2 + (spread / (way - 1)) * i;
+            addEnemyBullet(ex, ey, Math.cos(ang) * 4.6, Math.sin(ang) * 4.6, 'kunai', '#a000ff', '#ffffff', 6.5);
+          }
+        }
+      }
     }
 
     /* ---------------------------------------------------------
@@ -787,6 +933,11 @@
       fireCooldown = 0;
       frameCount = 0;
 
+      boss = null;
+      bossLevel = 1;
+      nextBossKills = CONFIG.BOSS_INTERVAL;
+      warningTimer = 0;
+
       player.x = 120;
       player.y = GAME_HEIGHT / 2;
       player.targetY = GAME_HEIGHT / 2;
@@ -798,6 +949,7 @@
 
       scoreVal.textContent = "0";
       timeVal.textContent = "0.0";
+      document.getElementById('boss-bar-wrapper').style.display = 'none';
     }
 
     function startGame() {
@@ -813,6 +965,7 @@
       gameState = 'GAMEOVER';
       hud.style.display = 'none';
       fireBtn.style.display = 'none';
+      document.getElementById('boss-bar-wrapper').style.display = 'none';
 
       finalScore.textContent = score;
       finalTime.textContent = elapsedTime.toFixed(1);
@@ -820,18 +973,19 @@
     }
 
     function spawnEnemy() {
-      const radius = Math.random() * 8 + 20;
+      const type = Math.floor(Math.random() * 4);
+      const radius = 22;
       enemies.push({
         x: GAME_WIDTH + radius + 20,
         y: Math.random() * (GAME_HEIGHT - 140) + 50,
         radius: radius,
-        speed: CONFIG.ENEMY_SPEED + (Math.random() * 1.0 - 0.3),
+        speed: CONFIG.ENEMY_SPEED + (Math.random() * 0.8),
         floatOffset: Math.random() * Math.PI * 2,
         floatSpeed: Math.random() * 0.05 + 0.03,
-        patternType: Math.floor(Math.random() * 4), // 弾幕パターンの決定
-        shootTimer: Math.floor(Math.random() * 20),
+        type: type,
+        shootTimer: Math.floor(Math.random() * 15),
         shootCount: 0,
-        hp: 3 // 少し硬くして弾幕を出させる
+        hp: (type === 3) ? 5 : 3
       });
     }
 
@@ -843,7 +997,7 @@
       timeVal.textContent = elapsedTime.toFixed(1);
 
       // キーボード移動
-      const kbSpeed = 8;
+      const kbSpeed = 8.5;
       if (keys['ArrowUp'] || keys['KeyW']) player.targetY -= kbSpeed;
       if (keys['ArrowDown'] || keys['KeyS']) player.targetY += kbSpeed;
       player.targetY = Math.max(35, Math.min(GAME_HEIGHT - 35, player.targetY));
@@ -857,7 +1011,7 @@
         shootPlayerBullet();
       }
 
-      // 1. 自機弾の更新
+      // 1. 自機弾更新
       for (let i = playerBullets.length - 1; i >= 0; i--) {
         const b = playerBullets[i];
         b.x += b.vx;
@@ -867,25 +1021,83 @@
         }
       }
 
-      // 2. 敵の出現管理
-      if (Date.now() - lastSpawnTime > CONFIG.SPAWN_INTERVAL) {
+      // ボス出現トリガー
+      if (score >= nextBossKills && !boss) {
+        spawnBoss();
+      }
+
+      // 2. 雑魚敵スポーン (ボス戦時は停止)
+      if (!boss && Date.now() - lastSpawnTime > CONFIG.SPAWN_INTERVAL) {
         spawnEnemy();
         lastSpawnTime = Date.now();
       }
 
-      // 3. 敵（妖怪）の動作 ＆ 弾幕発射処理
+      // ボスの更新 ＆ 当たり判定
+      if (boss) {
+        if (boss.x > boss.targetX) boss.x -= 2.2;
+        boss.floatOffset += 0.03;
+        updateBossShooting();
+
+        const currentBossY = boss.y + Math.sin(boss.floatOffset) * 22;
+
+        // 自機 vs ボス直撃
+        const distToPlayer = Math.hypot(boss.x - player.x, currentBossY - player.y);
+        if (distToPlayer < boss.radius + player.hitRadius) {
+          createExplosion(player.x, player.y, CONFIG.PLAYER_COLOR, 40);
+          createExplosion(boss.x, currentBossY, '#ff0055', 40);
+          gameOver();
+          return;
+        }
+
+        // 自機弾 vs ボス
+        for (let j = playerBullets.length - 1; j >= 0; j--) {
+          const pb = playerBullets[j];
+          const distToBullet = Math.hypot(boss.x - pb.x, currentBossY - pb.y);
+          if (distToBullet < boss.radius + pb.radius) {
+            createExplosion(pb.x, pb.y, '#ffe600', 5);
+            playerBullets.splice(j, 1);
+            boss.hp--;
+            updateBossHpBar();
+
+            if (boss.hp <= 0) {
+              // ボス撃破！華やかな大爆発
+              for (let k = 0; k < 8; k++) {
+                createExplosion(
+                  boss.x + (Math.random() - 0.5) * 90,
+                  currentBossY + (Math.random() - 0.5) * 90,
+                  '#ff0055',
+                  30
+                );
+                createExplosion(
+                  boss.x + (Math.random() - 0.5) * 90,
+                  currentBossY + (Math.random() - 0.5) * 90,
+                  '#ffe600',
+                  30
+                );
+              }
+              score += 5;
+              scoreVal.textContent = score;
+              nextBossKills = (Math.floor(score / CONFIG.BOSS_INTERVAL) + 1) * CONFIG.BOSS_INTERVAL;
+              boss = null;
+              document.getElementById('boss-bar-wrapper').style.display = 'none';
+              break;
+            }
+          }
+        }
+      }
+
+      // 3. 雑魚敵の動作 ＆ 弾幕発射処理
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         e.x -= e.speed;
         e.floatOffset += e.floatSpeed;
         const currentY = e.y + Math.sin(e.floatOffset) * 12;
 
-        // 画面内での弾幕発射カウントダウン
+        // 画面内発射
         if (e.x < GAME_WIDTH - 20 && e.x > 80) {
           e.shootTimer++;
           
-          // 弾幕発射頻度 (CONFIGのENEMY_SHOOT_INTERVAL)
-          const interval = (e.patternType === 2) ? 12 : CONFIG.ENEMY_SHOOT_INTERVAL;
+          const interval = (e.type === 1) ? 14 : CONFIG.ENEMY_SHOOT_INTERVAL;
           if (e.shootTimer >= interval) {
             spawnEnemyBulletPattern(e);
             e.shootTimer = 0;
@@ -898,16 +1110,16 @@
           continue;
         }
 
-        // 自機と敵本体の直接衝突判定
+        // 自機 vs 雑魚敵直撃
         const distToPlayer = Math.hypot(e.x - player.x, currentY - player.y);
         if (distToPlayer < e.radius + player.hitRadius) {
           createExplosion(player.x, player.y, CONFIG.PLAYER_COLOR, 35);
-          createExplosion(e.x, currentY, CONFIG.ENEMY_COLOR, 35);
+          createExplosion(e.x, currentY, '#00f0ff', 35);
           gameOver();
           return;
         }
 
-        // 自機弾 vs 敵の衝突判定
+        // 自機弾 vs 雑魚敵
         for (let j = playerBullets.length - 1; j >= 0; j--) {
           const pb = playerBullets[j];
           const distToBullet = Math.hypot(e.x - pb.x, currentY - pb.y);
@@ -918,7 +1130,7 @@
             
             e.hp--;
             if (e.hp <= 0) {
-              createExplosion(e.x, currentY, CONFIG.ENEMY_COLOR, 30);
+              createExplosion(e.x, currentY, '#00f0ff', 25);
               createExplosion(e.x, currentY, '#ffe600', 15);
               enemies.splice(i, 1);
               score++;
@@ -929,24 +1141,24 @@
         }
       }
 
-      // 4. 敵弾（弾幕）の更新 ＆ 自機との当たり判定
+      // 4. 敵弾（弾幕）の更新 ＆ 自機との喰らい判定
       for (let i = enemyBullets.length - 1; i >= 0; i--) {
         const eb = enemyBullets[i];
         eb.x += eb.vx;
         eb.y += eb.vy;
+        eb.timer++;
 
         // 画面外消去
-        if (eb.x < -30 || eb.x > GAME_WIDTH + 30 || eb.y < -30 || eb.y > GAME_HEIGHT + 30) {
+        if (eb.x < -40 || eb.x > GAME_WIDTH + 40 || eb.y < -40 || eb.y > GAME_HEIGHT + 40) {
           enemyBullets.splice(i, 1);
           continue;
         }
 
-        // ★ 弾幕判定: 敵弾 vs 自機判定点 (player.hitRadius) ★
+        // ★ 判定：敵弾 vs 自機判定点 (player.hitRadius = 4.5px) ★
         const dist = Math.hypot(eb.x - player.x, eb.y - player.y);
         if (dist < eb.radius + player.hitRadius) {
-          // 被弾・爆発・ゲームオーバー
           createExplosion(player.x, player.y, '#ff0055', 40);
-          createExplosion(player.x, player.y, '#ffe600', 25);
+          createExplosion(player.x, player.y, '#ffe600', 30);
           gameOver();
           return;
         }
@@ -954,7 +1166,7 @@
     }
 
     /* ---------------------------------------------------------
-       7. 描画処理 (弾幕・自機・判定表示)
+       7. 描画処理 (多彩な妖弾グラフィック・極小判定点)
        --------------------------------------------------------- */
     function draw() {
       drawBackground();
@@ -974,66 +1186,178 @@
           ctx.restore();
         });
 
-        // B. 敵（鬼火・妖魔）描画
+        // B. ボス（九尾の大妖魔）描画
+        if (boss) {
+          const currentBossY = boss.y + Math.sin(boss.floatOffset) * 22;
+          ctx.save();
+          ctx.translate(boss.x, currentBossY);
+
+          // 9本の尾
+          ctx.fillStyle = 'rgba(255, 0, 85, 0.8)';
+          ctx.shadowBlur = 25;
+          ctx.shadowColor = '#ff0055';
+          for (let i = 0; i < 9; i++) {
+            const tailAngle = (i - 4) * 0.22 + Math.sin(frameCount * 0.05 + i) * 0.14;
+            ctx.save();
+            ctx.rotate(tailAngle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.quadraticCurveTo(65, -38, 105, 0);
+            ctx.quadraticCurveTo(65, 38, 0, 0);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // 妖術魔法陣
+          ctx.save();
+          ctx.rotate(frameCount * 0.025);
+          ctx.strokeStyle = '#ffe600';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(0, 0, boss.radius + 18, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.rect(-boss.radius, -boss.radius, boss.radius * 2, boss.radius * 2);
+          ctx.stroke();
+          ctx.restore();
+
+          // ボス本体核
+          const bossGrad = ctx.createRadialGradient(0, 0, 10, 0, 0, boss.radius);
+          bossGrad.addColorStop(0, '#ffffff');
+          bossGrad.addColorStop(0.35, '#ff0055');
+          bossGrad.addColorStop(0.8, '#800f2f');
+          bossGrad.addColorStop(1, 'rgba(20, 0, 30, 0.9)');
+
+          ctx.fillStyle = bossGrad;
+          ctx.beginPath();
+          ctx.arc(0, 0, boss.radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        }
+
+        // WARNING アラート表示
+        if (warningTimer > 0) {
+          warningTimer--;
+          if (Math.floor(warningTimer / 10) % 2 === 0) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(255, 0, 85, 0.25)';
+            ctx.fillRect(0, 190, GAME_WIDTH, 160);
+
+            ctx.font = '900 42px "Hiragino Kaku Gothic ProN", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffe600';
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = '#ff0055';
+            ctx.fillText('⚠️ WARNING!! 大妖魔襲来 ⚠️', GAME_WIDTH / 2, GAME_HEIGHT / 2);
+            ctx.restore();
+          }
+        }
+
+        // C. 雑魚敵（4種類の和風妖怪）描画
         enemies.forEach(e => {
           const currentY = e.y + Math.sin(e.floatOffset) * 12;
-
           ctx.save();
           ctx.translate(e.x, currentY);
 
-          ctx.shadowBlur = 22;
-          ctx.shadowColor = CONFIG.ENEMY_COLOR;
+          const colors = ['#00f0ff', '#ff2a5f', '#a000ff', '#ffe600'];
+          const mainColor = colors[e.type] || '#00f0ff';
+
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = mainColor;
 
           const flameGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, e.radius);
           flameGrad.addColorStop(0, '#ffffff');
-          flameGrad.addColorStop(0.4, CONFIG.ENEMY_COLOR);
-          flameGrad.addColorStop(1, 'rgba(0, 50, 150, 0)');
+          flameGrad.addColorStop(0.45, mainColor);
+          flameGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
           
           ctx.fillStyle = flameGrad;
           ctx.beginPath();
           ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
           ctx.fill();
 
-          // 妖火のメラメラした尾
-          ctx.fillStyle = CONFIG.ENEMY_COLOR;
+          // 妖火炎の尾
+          ctx.fillStyle = mainColor;
           ctx.beginPath();
           ctx.moveTo(0, -e.radius * 0.7);
-          ctx.quadraticCurveTo(e.radius * 1.5, 0, e.radius * 0.8, e.radius * 0.7);
+          ctx.quadraticCurveTo(e.radius * 1.6, 0, e.radius * 0.8, e.radius * 0.7);
           ctx.quadraticCurveTo(0, e.radius * 0.3, 0, -e.radius * 0.7);
           ctx.fill();
 
           ctx.restore();
         });
 
-        // C. 敵弾幕（高輝度ネオン妖弾）描画
+        // D. 敵弾幕（多彩な弾の種別描画）
         enemyBullets.forEach(eb => {
           ctx.save();
           ctx.translate(eb.x, eb.y);
 
-          ctx.shadowBlur = 14;
+          ctx.shadowBlur = 12;
           ctx.shadowColor = eb.glow || '#ff0055';
 
-          // 弾の外枠・オーラ
-          ctx.fillStyle = eb.color || '#ff2a5f';
-          ctx.beginPath();
-          ctx.arc(0, 0, eb.radius, 0, Math.PI * 2);
-          ctx.fill();
+          if (eb.type === 'kunai') {
+            // ★ クナイ/針弾 (進行方向に回転)
+            ctx.rotate(eb.angle);
+            ctx.fillStyle = eb.color;
+            ctx.beginPath();
+            ctx.moveTo(eb.radius * 2.2, 0);
+            ctx.lineTo(-eb.radius * 1.2, -eb.radius * 0.7);
+            ctx.lineTo(-eb.radius * 0.5, 0);
+            ctx.lineTo(-eb.radius * 1.2, eb.radius * 0.7);
+            ctx.closePath();
+            ctx.fill();
 
-          // 弾の中心（白く光る核）
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(0, 0, eb.radius * 0.45, 0, Math.PI * 2);
-          ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(-2, -1.5, 6, 3);
+          } 
+          else if (eb.type === 'big') {
+            // ★ 巨大陰陽玉/大玉
+            const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, eb.radius);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.3, eb.color);
+            grad.addColorStop(1, 'rgba(20,0,30,0.8)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(0, 0, eb.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          } 
+          else if (eb.type === 'petal') {
+            // ★ 桜花弁弾
+            ctx.rotate(eb.angle + eb.timer * 0.08);
+            ctx.fillStyle = eb.color;
+            ctx.beginPath();
+            ctx.moveTo(0, -eb.radius);
+            ctx.quadraticCurveTo(eb.radius, -eb.radius / 2, eb.radius / 2, eb.radius);
+            ctx.quadraticCurveTo(0, eb.radius / 2, -eb.radius / 2, eb.radius);
+            ctx.quadraticCurveTo(-eb.radius, -eb.radius / 2, 0, -eb.radius);
+            ctx.fill();
+          } 
+          else {
+            // ★ 標準小丸弾
+            ctx.fillStyle = eb.color || '#ff2a5f';
+            ctx.beginPath();
+            ctx.arc(0, 0, eb.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(0, 0, eb.radius * 0.45, 0, Math.PI * 2);
+            ctx.fill();
+          }
 
           ctx.restore();
         });
 
-        // D. 自機（式神・お札）＆ 喰らい判定表示
+        // E. 自機（式神のお札）＆ 喰らい判定ドット表示
         if (gameState === 'PLAYING') {
           ctx.save();
           ctx.translate(player.x, player.y);
 
-          // 式神の霊力オーラ
+          // 霊力オーラ
           ctx.shadowBlur = 18;
           ctx.shadowColor = CONFIG.PLAYER_COLOR;
           
@@ -1065,7 +1389,7 @@
 
           ctx.restore();
 
-          // ★ 弾幕ゲー必須：自機の喰らい判定ポイント描画（中央に赤く輝く点） ★
+          // ★ 喰らい判定ポイント（自機中心に小さく輝く赤い点） ★
           ctx.save();
           ctx.translate(player.x, player.y);
           ctx.shadowBlur = 15;
@@ -1095,7 +1419,7 @@
     requestAnimationFrame(gameLoop);
 
     /* ---------------------------------------------------------
-       9. ボタンイベントハンドラ
+       9. ボタンイベント
        --------------------------------------------------------- */
     document.getElementById('start-btn').addEventListener('click', startGame);
     document.getElementById('retry-btn').addEventListener('click', startGame);

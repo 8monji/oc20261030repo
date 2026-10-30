@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BLONDE HERO vs CATS</title>
+    <title>GOLDEN PRINCE vs CATS</title>
     <style>
         /* 全体スタイルの初期化 */
         * {
@@ -175,33 +175,6 @@
                 transform: rotate(0deg);
             }
         }
-
-        /* FIREボタン */
-        #fire-btn {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 75px;
-            height: 75px;
-            border-radius: 50%;
-            background: rgba(0, 242, 254, 0.4);
-            border: 2px solid #00f2fe;
-            color: #fff;
-            font-weight: bold;
-            font-size: 1.1rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
-            z-index: 5;
-            pointer-events: auto;
-            touch-action: manipulation;
-        }
-
-        #fire-btn:active {
-            background: rgba(0, 242, 254, 0.8);
-            transform: scale(0.92);
-        }
     </style>
 </head>
 
@@ -215,9 +188,9 @@
             <h1 id="game-title">GOLDEN PRINCE vs CATS</h1>
             <div class="instructions">
                 【操作方法】<br>
-                上下ドラッグ：金髪美少年の移動<br>
-                画面タップ / FIREボタン / [Space]キー：魔法弾発射<br>
-                猫を撃破してレベルアップ！弾が大きく強くなります！
+                上下ドラッグ / マウス移動：金髪美少年の移動<br>
+                ★ 攻撃は全自動！弾が自動で連射されます ★<br>
+                猫を倒してレベルアップ！連射速度とパワーが上昇！
             </div>
             <div>
                 <button id="start-btn" class="btn interactive">START GAME</button>
@@ -231,9 +204,6 @@
             <div class="result-text" id="result-display">TIME: 0s | HIT: 0 | LEVEL: 1</div>
             <button id="retry-btn" class="btn interactive">RETRY</button>
         </div>
-
-        <!-- FIREボタン -->
-        <div id="fire-btn" style="display: none;">FIRE</div>
     </div>
 
     <!-- 縦画面表示時の警告メッセージ -->
@@ -252,10 +222,11 @@
             hairColor: "#ffe600",
             skinColor: "#fff0db",
             magicColor: "#00f2fe",
-            enemySpeed: 200,
-            enemySpawnInterval: 0.9,
-            bulletSpeed: 750,
-            playerFollowSpeed: 14.0
+            enemySpeed: 180,
+            enemySpawnInterval: 1.0,
+            bulletSpeed: 800,
+            playerFollowSpeed: 14.0,
+            autoShootInterval: 0.18 // 自動連射の間隔（秒）
         };
 
         const CANVAS_WIDTH = 960;
@@ -270,7 +241,6 @@
         const startBtn = document.getElementById('start-btn');
         const retryBtn = document.getElementById('retry-btn');
         const fullscreenBtn = document.getElementById('fullscreen-btn');
-        const fireBtn = document.getElementById('fire-btn');
         const rotateMessage = document.getElementById('rotate-message');
         const gameTitle = document.getElementById('game-title');
         const resultDisplay = document.getElementById('result-display');
@@ -284,6 +254,7 @@
         let hitCount = 0;
         let level = 1;
         let enemyTimer = 0;
+        let autoShootTimer = 0; // 自動攻撃用タイマー
 
         // 画面サイズ計算用
         let scale = 1;
@@ -304,15 +275,16 @@
         let bullets = [];
         let enemies = [];
         let particles = [];
+        let bodyParts = []; // 主人公の肉体破片
         let stars = [];
 
         // 猫の種類定義
         const CAT_TYPES = [
-            { name: "白猫", bodyColor: "#ffffff", earColor: "#ffb6c1", eyeColor: "#00bfff" },
-            { name: "黒猫", bodyColor: "#222222", earColor: "#444444", eyeColor: "#76ff03" },
-            { name: "三毛猫", bodyColor: "#f5e6ca", earColor: "#d97706", eyeColor: "#059669", spotColor: "#b45309" },
-            { name: "ハチワレ", bodyColor: "#3b82f6", earColor: "#1d4ed8", eyeColor: "#f59e0b" },
-            { name: "ピンク猫", bodyColor: "#f472b6", earColor: "#db2777", eyeColor: "#facc15" }
+            { name: "白猫", bodyColor: "#ffffff", earColor: "#ffb6c1", eyeColor: "#00bfff", baseHp: 1, baseRadius: 18 },
+            { name: "黒猫", bodyColor: "#222222", earColor: "#444444", eyeColor: "#76ff03", baseHp: 1, baseRadius: 18 },
+            { name: "三毛猫", bodyColor: "#f5e6ca", earColor: "#d97706", eyeColor: "#059669", spotColor: "#b45309", baseHp: 2, baseRadius: 21 },
+            { name: "ハチワレ", bodyColor: "#3b82f6", earColor: "#1d4ed8", eyeColor: "#f59e0b", baseHp: 2, baseRadius: 21 },
+            { name: "ボスアーマー猫", bodyColor: "#8b5cf6", earColor: "#4c1d95", eyeColor: "#ef4444", baseHp: 4, baseRadius: 28 }
         ];
 
         // 背景用の星
@@ -370,13 +342,13 @@
         resizeCanvas();
 
         // =========================================================
-        // 入力処理
+        // 入力処理（位置追従のみ）
         // =========================================================
         let isDragging = false;
 
         function handlePointerDown(e) {
             if (gameState !== 'PLAYING') return;
-            if (e.target === fireBtn || e.target.classList.contains('interactive')) return;
+            if (e.target.classList.contains('interactive')) return;
 
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -384,12 +356,10 @@
             const pos = getGameCoordinates(clientX, clientY);
             player.targetY = pos.y;
             isDragging = true;
-
-            shootBullet();
         }
 
         function handlePointerMove(e) {
-            if (!isDragging || gameState !== 'PLAYING') return;
+            if (gameState !== 'PLAYING') return;
 
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -410,23 +380,6 @@
         window.addEventListener('touchmove', handlePointerMove, { passive: false });
         window.addEventListener('touchend', handlePointerUp);
 
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && gameState === 'PLAYING') {
-                shootBullet();
-                e.preventDefault();
-            }
-        });
-
-        fireBtn.addEventListener('touchstart', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (gameState === 'PLAYING') shootBullet();
-        });
-        fireBtn.addEventListener('mousedown', (e) => {
-            e.stopPropagation();
-            if (gameState === 'PLAYING') shootBullet();
-        });
-
         fullscreenBtn.addEventListener('click', () => {
             if (!document.fullscreenElement) {
                 container.requestFullscreen().catch(err => {
@@ -438,19 +391,51 @@
         });
 
         // 出血パーティクル生成
-        function createBloodSplatter(x, y) {
-            const particleCount = 20;
-            for (let i = 0; i < particleCount; i++) {
+        function createBloodSplatter(x, y, count = 20) {
+            for (let i = 0; i < count; i++) {
                 const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 200 + 50;
+                const speed = Math.random() * 220 + 40;
                 particles.push({
                     x: x,
                     y: y,
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
-                    radius: Math.random() * 3.5 + 2,
+                    radius: Math.random() * 4 + 2,
                     alpha: 1.0,
                     color: Math.random() > 0.3 ? '#dc2626' : '#991b1b'
+                });
+            }
+        }
+
+        // 主人公の身体がバラバラに吹き飛ぶ演出
+        function createPlayerDismemberment(px, py) {
+            createBloodSplatter(px, py, 45);
+
+            const partsDef = [
+                { name: "head", color: CONFIG.skinColor, radius: 9, isHead: true },
+                { name: "hair1", color: CONFIG.hairColor, radius: 8 },
+                { name: "hair2", color: CONFIG.hairColor, radius: 7 },
+                { name: "body", color: "#4f46e5", radius: 10 },
+                { name: "armR", color: CONFIG.skinColor, radius: 5 },
+                { name: "armL", color: CONFIG.skinColor, radius: 5 },
+                { name: "legR", color: "#312e81", radius: 6 },
+                { name: "legL", color: "#312e81", radius: 6 }
+            ];
+
+            for (let part of partsDef) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 280 + 100;
+                bodyParts.push({
+                    x: px,
+                    y: py,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    rotation: Math.random() * Math.PI * 2,
+                    vRot: (Math.random() - 0.5) * 12,
+                    radius: part.radius,
+                    color: part.color,
+                    isHead: part.isHead || false,
+                    alpha: 1.0
                 });
             }
         }
@@ -464,32 +449,36 @@
             hitCount = 0;
             level = 1;
             enemyTimer = 0;
+            autoShootTimer = 0;
             levelUpMsgTimer = 0;
             bullets = [];
             enemies = [];
             particles = [];
+            bodyParts = [];
 
             player.y = CANVAS_HEIGHT / 2;
             player.targetY = CANVAS_HEIGHT / 2;
 
             titleScreen.style.display = 'none';
             gameoverScreen.style.display = 'none';
-            fireBtn.style.display = 'flex';
         }
 
         function gameOver() {
             gameState = 'GAMEOVER';
-            fireBtn.style.display = 'none';
-            resultDisplay.textContent = `TIME: ${gameTime.toFixed(1)}s  |  HIT: ${hitCount}  |  LEVEL: ${level}`;
-            gameoverScreen.style.display = 'flex';
+
+            createPlayerDismemberment(player.x, player.y);
+
+            setTimeout(() => {
+                resultDisplay.textContent = `TIME: ${gameTime.toFixed(1)}s  |  HIT: ${hitCount}  |  LEVEL: ${level}`;
+                gameoverScreen.style.display = 'flex';
+            }, 1000);
         }
 
+        // 自動攻撃ロジック
         function shootBullet() {
-            // レベルに応じた弾の強化
             const bulletRadius = 5 + (level - 1) * 2;
-            const bulletPower = level;
+            const bulletPower = 1 + Math.floor(level / 2);
 
-            // レベルが高くなるとマルチショット化（3方向発射など）
             if (level >= 5) {
                 bullets.push({ x: player.x + 28, y: player.y, vy: -120, radius: bulletRadius, power: bulletPower });
                 bullets.push({ x: player.x + 28, y: player.y, vy: 0, radius: bulletRadius, power: bulletPower });
@@ -503,24 +492,34 @@
         }
 
         function spawnEnemy() {
-            const radius = 18;
-            const catType = CAT_TYPES[Math.floor(Math.random() * CAT_TYPES.length)];
+            let availableTypes = [CAT_TYPES[0], CAT_TYPES[1]];
+            if (level >= 2) availableTypes.push(CAT_TYPES[2]);
+            if (level >= 3) availableTypes.push(CAT_TYPES[3]);
+            if (level >= 4) availableTypes.push(CAT_TYPES[4]);
+
+            const catType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+
+            const hpBonus = Math.floor((level - 1) / 2);
+            const enemyHp = catType.baseHp + hpBonus;
+            const radius = catType.baseRadius;
+
             enemies.push({
                 x: CANVAS_WIDTH + radius,
                 y: Math.random() * (CANVAS_HEIGHT - radius * 4) + radius * 2,
                 radius: radius,
                 type: catType,
-                hp: 1
+                hp: enemyHp,
+                maxHp: enemyHp,
+                speedBonus: Math.random() * 40
             });
         }
 
         function addHit() {
             hitCount++;
-            // 5撃破ごとにレベルアップ
             const newLevel = Math.floor(hitCount / 5) + 1;
             if (newLevel > level) {
                 level = newLevel;
-                levelUpMsgTimer = 1.5; // レベルアップ表示（1.5秒）
+                levelUpMsgTimer = 1.5;
             }
         }
 
@@ -538,8 +537,18 @@
                 const p = particles[i];
                 p.x += p.vx * dt;
                 p.y += p.vy * dt;
-                p.alpha -= 2.0 * dt;
+                p.alpha -= 1.8 * dt;
                 if (p.alpha <= 0) particles.splice(i, 1);
+            }
+
+            // バラバラパーツ
+            for (let i = bodyParts.length - 1; i >= 0; i--) {
+                const bp = bodyParts[i];
+                bp.x += bp.vx * dt;
+                bp.y += bp.vy * dt;
+                bp.rotation += bp.vRot * dt;
+                bp.alpha -= 0.8 * dt;
+                if (bp.alpha <= 0) bodyParts.splice(i, 1);
             }
 
             if (levelUpMsgTimer > 0) {
@@ -550,12 +559,20 @@
 
             gameTime += dt;
 
+            // 自動攻撃タイマー（レベル向上で連射速度アップ）
+            const currentShootInterval = Math.max(0.08, CONFIG.autoShootInterval - (level - 1) * 0.012);
+            autoShootTimer += dt;
+            if (autoShootTimer >= currentShootInterval) {
+                shootBullet();
+                autoShootTimer = 0;
+            }
+
             // プレイヤー追従
             player.y += (player.targetY - player.y) * CONFIG.playerFollowSpeed * dt;
             player.y = Math.max(25, Math.min(CANVAS_HEIGHT - 25, player.y));
 
-            // 敵出現（レベルに応じて出現間隔が短く）
-            const currentSpawnInterval = Math.max(0.3, CONFIG.enemySpawnInterval - (level - 1) * 0.08);
+            // 敵出現
+            const currentSpawnInterval = Math.max(0.25, CONFIG.enemySpawnInterval - (level - 1) * 0.1);
             enemyTimer += dt;
             if (enemyTimer >= currentSpawnInterval) {
                 spawnEnemy();
@@ -571,11 +588,11 @@
                 }
             }
 
-            // 敵移動（レベルに応じて速度微増）
-            const currentEnemySpeed = CONFIG.enemySpeed + (level - 1) * 15;
+            // 敵移動
             for (let i = enemies.length - 1; i >= 0; i--) {
+                const currentEnemySpeed = CONFIG.enemySpeed + (level - 1) * 25 + enemies[i].speedBonus;
                 enemies[i].x -= currentEnemySpeed * dt;
-                if (enemies[i].x < -40) {
+                if (enemies[i].x < -50) {
                     enemies.splice(i, 1);
                 }
             }
@@ -592,10 +609,15 @@
                     const dist = Math.sqrt(dx * dx + dy * dy);
 
                     if (dist < b.radius + e.radius) {
-                        createBloodSplatter(e.x, e.y);
+                        createBloodSplatter(e.x, e.y, 10);
+                        e.hp -= (b.power || 1);
                         bullets.splice(i, 1);
-                        enemies.splice(j, 1);
-                        addHit();
+
+                        if (e.hp <= 0) {
+                            createBloodSplatter(e.x, e.y, 25);
+                            enemies.splice(j, 1);
+                            addHit();
+                        }
                         break;
                     }
                 }
@@ -608,7 +630,6 @@
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
                 if (dist < player.radius + e.radius) {
-                    createBloodSplatter(player.x, player.y);
                     gameOver();
                     break;
                 }
@@ -619,7 +640,6 @@
         // 描画ループ
         // =========================================================
         function draw() {
-            // 背景
             ctx.fillStyle = CONFIG.bgColor;
             ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
@@ -642,7 +662,27 @@
                 ctx.restore();
             }
 
-            // 弾の描画（レベルで豪華に）
+            // 飛散するバラバラパーツ描画
+            for (let bp of bodyParts) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, bp.alpha);
+                ctx.translate(bp.x, bp.y);
+                ctx.rotate(bp.rotation);
+                ctx.fillStyle = bp.color;
+
+                ctx.beginPath();
+                ctx.arc(0, 0, bp.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (bp.isHead) {
+                    ctx.fillStyle = "#0284c7";
+                    ctx.fillRect(2, -2, 3, 3);
+                }
+
+                ctx.restore();
+            }
+
+            // 弾描画
             ctx.fillStyle = CONFIG.magicColor;
             ctx.shadowBlur = 10 + level * 2;
             ctx.shadowColor = CONFIG.magicColor;
@@ -651,7 +691,6 @@
                 ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 弾コア
                 ctx.fillStyle = "#ffffff";
                 ctx.beginPath();
                 ctx.arc(b.x, b.y, b.radius * 0.5, 0, Math.PI * 2);
@@ -659,7 +698,7 @@
                 ctx.fillStyle = CONFIG.magicColor;
             }
 
-            // 敵キャラ（猫）の描画
+            // 敵キャラ（猫）描画
             ctx.shadowBlur = 8;
             for (let e of enemies) {
                 ctx.shadowColor = e.type.bodyColor;
@@ -689,7 +728,6 @@
                 ctx.arc(ex, ey, r, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 三毛猫などの模様
                 if (e.type.spotColor) {
                     ctx.fillStyle = e.type.spotColor;
                     ctx.beginPath();
@@ -697,7 +735,7 @@
                     ctx.fill();
                 }
 
-                // 目（つり目猫）
+                // 目
                 ctx.fillStyle = e.type.eyeColor;
                 ctx.beginPath();
                 ctx.ellipse(ex - r * 0.4, ey - r * 0.1, 3, 5, -0.2, 0, Math.PI * 2);
@@ -723,9 +761,23 @@
                 ctx.moveTo(ex - r * 0.6, ey + r * 0.2);
                 ctx.lineTo(ex - r * 1.3, ey + r * 0.3);
                 ctx.stroke();
+
+                // HPゲージ
+                if (e.maxHp > 1) {
+                    const barW = r * 1.8;
+                    const barH = 4;
+                    const barX = ex - barW / 2;
+                    const barY = ey - r - 8;
+
+                    ctx.fillStyle = "rgba(0,0,0,0.6)";
+                    ctx.fillRect(barX, barY, barW, barH);
+
+                    ctx.fillStyle = "#ef4444";
+                    ctx.fillRect(barX, barY, barW * (e.hp / e.maxHp), barH);
+                }
             }
 
-            // 金髪美少年の描画
+            // 金髪美少年描画
             if (gameState === 'PLAYING') {
                 const px = player.x;
                 const py = player.y;
@@ -733,7 +785,7 @@
                 ctx.shadowBlur = 10;
                 ctx.shadowColor = CONFIG.hairColor;
 
-                // 体・綺麗なケープ/服
+                // 服
                 ctx.fillStyle = "#4f46e5";
                 ctx.beginPath();
                 ctx.moveTo(px - 12, py - 6);
@@ -743,17 +795,16 @@
                 ctx.closePath();
                 ctx.fill();
 
-                // 金色の飾り帯
                 ctx.fillStyle = "#f59e0b";
                 ctx.fillRect(px - 10, py + 2, 16, 3);
 
-                // 顔（美肌）
+                // 顔
                 ctx.fillStyle = CONFIG.skinColor;
                 ctx.beginPath();
                 ctx.arc(px, py - 10, 10, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 大きく輝く青い瞳（美少年風）
+                // 目
                 ctx.fillStyle = "#0284c7";
                 ctx.beginPath();
                 ctx.ellipse(px + 3, py - 10, 2.5, 4, 0, 0, Math.PI * 2);
@@ -763,27 +814,26 @@
                 ctx.arc(px + 4, py - 11, 1, 0, Math.PI * 2);
                 ctx.fill();
 
-                // さらさら金髪（美しいウルフ・ミディアムヘア）
+                // 髪
                 ctx.fillStyle = CONFIG.hairColor;
                 ctx.beginPath();
-                // 髪の頂点から後ろ・前髪
                 ctx.arc(px - 2, py - 12, 11, Math.PI * 0.8, Math.PI * 1.9);
                 ctx.lineTo(px + 8, py - 15);
-                ctx.lineTo(px + 5, py - 8); // 前髪の束
+                ctx.lineTo(px + 5, py - 8);
                 ctx.lineTo(px + 2, py - 14);
                 ctx.lineTo(px - 2, py - 6);
                 ctx.lineTo(px - 8, py - 12);
-                ctx.lineTo(px - 14, py - 4); // 後ろに流れる髪
+                ctx.lineTo(px - 14, py - 4);
                 ctx.closePath();
                 ctx.fill();
 
-                // 手（魔法を放つ手）
+                // 手
                 ctx.fillStyle = CONFIG.skinColor;
                 ctx.beginPath();
                 ctx.arc(px + 14, py + 2, 4, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 手元の魔法オーラ
+                // 魔法オーラ（常時発光）
                 ctx.fillStyle = CONFIG.magicColor;
                 ctx.shadowBlur = 12;
                 ctx.shadowColor = CONFIG.magicColor;
@@ -802,12 +852,10 @@
                 ctx.fillText(`TIME: ${gameTime.toFixed(1)}s`, 20, 35);
                 ctx.fillText(`HIT: ${hitCount}`, 180, 35);
 
-                // レベル表示（ネオンカラー）
                 ctx.fillStyle = '#00f2fe';
                 ctx.font = 'bold 22px sans-serif';
                 ctx.fillText(`LV: ${level}`, 300, 35);
 
-                // レベルアップの演出テキスト
                 if (levelUpMsgTimer > 0) {
                     ctx.save();
                     ctx.fillStyle = '#ffe600';

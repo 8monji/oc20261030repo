@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>マイ・シューティングゲーム</title>
+    <title>オーシャン・シューティング</title>
     <style>
         * {
             box-sizing: border-box;
@@ -17,7 +17,7 @@
         body, html {
             width: 100%;
             height: 100%;
-            background-color: #050508;
+            background-color: #030814;
             color: #ffffff;
             font-family: 'Helvetica Neue', Arial, sans-serif;
             overflow: hidden;
@@ -40,9 +40,9 @@
             position: relative;
             width: 960px;
             height: 540px;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 35px rgba(0, 212, 255, 0.4);
             overflow: hidden;
-            background-color: #0a0a1a;
+            background-color: #03045e;
         }
 
         canvas {
@@ -61,7 +61,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(10, 10, 26, 0.88);
+            background: rgba(3, 10, 35, 0.85);
             backdrop-filter: blur(6px);
             z-index: 10;
         }
@@ -71,9 +71,9 @@
         }
 
         h1 {
-            font-size: 44px;
-            color: #00ffff;
-            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 40px #0088ff;
+            font-size: 42px;
+            color: #80e5ff;
+            text-shadow: 0 0 10px #00bfff, 0 0 20px #00bfff, 0 0 40px #0077b6;
             margin-bottom: 15px;
             letter-spacing: 3px;
             text-align: center;
@@ -81,14 +81,14 @@
 
         p.instructions {
             font-size: 15px;
-            color: #c0d0e0;
+            color: #d0f4de;
             margin-bottom: 25px;
             text-align: center;
             line-height: 1.8;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.08);
             padding: 12px 24px;
-            border-radius: 8px;
-            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 12px;
+            border: 1px solid rgba(128, 229, 255, 0.3);
         }
 
         .btn-group {
@@ -101,29 +101,29 @@
             font-size: 18px;
             font-weight: bold;
             color: #ffffff;
-            background: linear-gradient(135deg, #00ffff, #0066ff);
+            background: linear-gradient(135deg, #00bfff, #0077b6);
             border: none;
             border-radius: 25px;
             cursor: pointer;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.6);
             transition: all 0.15s ease;
             outline: none;
         }
 
         .btn:active {
             transform: scale(0.95);
-            box-shadow: 0 0 5px rgba(0, 255, 255, 0.8);
+            box-shadow: 0 0 5px rgba(0, 191, 255, 0.9);
         }
 
         .btn-sub {
-            background: linear-gradient(135deg, #444466, #222244);
+            background: linear-gradient(135deg, #2c5364, #203a43);
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #ff0055, #ff5500);
-            box-shadow: 0 0 15px rgba(255, 0, 85, 0.5);
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            box-shadow: 0 0 15px rgba(255, 71, 87, 0.6);
         }
 
         #hud {
@@ -135,8 +135,8 @@
             justify-content: space-between;
             font-size: 20px;
             font-weight: bold;
-            color: #00ffff;
-            text-shadow: 0 0 8px #00ffff;
+            color: #80e5ff;
+            text-shadow: 0 0 8px #00bfff;
             pointer-events: none;
             z-index: 5;
         }
@@ -145,25 +145,25 @@
             position: absolute;
             bottom: 20px;
             right: 20px;
-            width: 76px;
-            height: 76px;
+            width: 78px;
+            height: 78px;
             border-radius: 50%;
-            background: radial-gradient(circle, #ff0055 0%, #990033 100%);
-            border: 2px solid #ff6699;
-            color: #ffffff;
-            font-size: 16px;
+            background: radial-gradient(circle, #ffffff 0%, #e6e6fa 60%, #b0c4de 100%);
+            border: 3px solid #80e5ff;
+            color: #004466;
+            font-size: 15px;
             font-weight: bold;
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 0 15px rgba(255, 0, 85, 0.7);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 10px rgba(0, 191, 255, 0.5);
             z-index: 8;
             cursor: pointer;
         }
 
         #fire-btn:active {
             transform: scale(0.92);
-            background: radial-gradient(circle, #ff5588 0%, #cc0044 100%);
+            background: radial-gradient(circle, #ffffff 0%, #d8bfd8 100%);
         }
 
         #portrait-warning {
@@ -172,7 +172,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: #050508;
+            background: #030814;
             z-index: 999;
             display: flex;
             flex-direction: column;
@@ -205,16 +205,16 @@
                 <div>HIT: <span id="hit-val">0</span></div>
             </div>
 
-            <!-- FIREボタン (スマホ用) -->
-            <div id="fire-btn" class="hidden">FIRE</div>
+            <!-- FIREボタン (真珠発射) -->
+            <div id="fire-btn" class="hidden">PEARL</div>
 
             <!-- タイトル画面 -->
             <div id="title-screen" class="overlay">
-                <h1 id="title-text">MY SHOOTING GAME</h1>
+                <h1 id="title-text">OCEAN SHOOTING</h1>
                 <p class="instructions">
                     【操作方法】<br>
-                    上下ドラッグ：宇宙船の移動<br>
-                    画面タップ または FIREボタン：弾を発射 (PC: Spaceキー)
+                    上下ドラッグ：イルカの移動<br>
+                    画面タップ または PEARLボタン：真珠を発射 (PC: Spaceキー)
                 </p>
                 <div class="btn-group">
                     <button class="btn" id="start-btn">PLAY</button>
@@ -224,10 +224,10 @@
 
             <!-- ゲームオーバー画面 -->
             <div id="gameover-screen" class="overlay hidden">
-                <h1 style="color: #ff0055; text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055;">GAME OVER</h1>
+                <h1 style="color: #ff4757; text-shadow: 0 0 10px #ff4757, 0 0 20px #ff4757;">GAME OVER</h1>
                 <p class="instructions" style="font-size: 18px; line-height: 2;">
-                    TIME: <span id="final-time" style="color: #00ffff;">0.0</span> 秒<br>
-                    HIT: <span id="final-hit" style="color: #00ffff;">0</span> 機撃破
+                    TIME: <span id="final-time" style="color: #80e5ff;">0.0</span> 秒<br>
+                    HIT: <span id="final-hit" style="color: #80e5ff;">0</span> 匹退治
                 </p>
                 <button class="btn btn-danger" id="retry-btn">RETRY</button>
             </div>
@@ -237,25 +237,21 @@
     <!-- 縦画面注意表示 -->
     <div id="portrait-warning" class="hidden">
         <div class="phone-icon">📱</div>
-        <h2 style="color: #00ffff; margin-bottom: 10px;">スマホを横にしてね</h2>
+        <h2 style="color: #80e5ff; margin-bottom: 10px;">スマホを横にしてね</h2>
         <p style="color: #aaaaaa;">このゲームは横画面専用です</p>
     </div>
 
     <script>
         // ==========================================
-        // 【CONFIG】設定変更コーナー（授業で自由に数値を変更！）
+        // 【CONFIG】設定変更コーナー
         // ==========================================
         const CONFIG = {
-            TITLE: "MY SHOOTING GAME", // ゲームタイトル
-            BG_COLOR: "#0a0a1a",       // 背景色
-            PLAYER_COLOR: "#00ffff",   // 自機の色
-            ENEMY_COLOR: "#ff0055",    // 敵の色
-            BULLET_COLOR: "#ffff00",   // 弾の色
-            ENEMY_SPEED: 230,          // 敵の移動速度 (px/秒)
-            ENEMY_INTERVAL: 0.9,       // 敵が出現する間隔 (秒)
-            BULLET_SPEED: 750,         // 弾の移動速度 (px/秒)
-            PLAYER_SMOOTH: 0.2,        // 移動追従のなめらかさ (0.01~1.0)
-            STAR_COUNT: 70             // 背景の星の数
+            TITLE: "OCEAN SHOOTING", // ゲームタイトル
+            ENEMY_SPEED: 220,         // 敵の移動速度 (px/秒)
+            ENEMY_INTERVAL: 0.9,      // 敵が出現する間隔 (秒)
+            BULLET_SPEED: 720,        // 真珠の移動速度 (px/秒)
+            PLAYER_SMOOTH: 0.2,       // イルカの移動追従速度 (0.01~1.0)
+            BUBBLE_COUNT: 65          // 背景の泡の数
         };
 
         // ==========================================
@@ -272,18 +268,18 @@
         let enemyTimer = 0;
         let isPaused = false;
 
-        // ゲームオブジェクト
+        // プレイヤー (水色のイルカ)
         let player = {
-            x: 90,
+            x: 100,
             y: V_HEIGHT / 2,
             targetY: V_HEIGHT / 2,
-            radius: 20
+            radius: 22
         };
 
-        let bullets = [];
-        let enemies = [];
-        let stars = [];
-        let particles = [];
+        let bullets = [];   // 真珠
+        let enemies = [];   // クラゲ・シャチ・サメ
+        let bubbles = [];   // 背景の泡
+        let particles = []; // 水滴パーティクル
 
         // UI要素参照
         let titleText, timeVal, hitVal, finalTime, finalHit;
@@ -306,53 +302,42 @@
             fireBtn = document.getElementById('fire-btn');
             portraitWarning = document.getElementById('portrait-warning');
 
-            // CONFIG設定の反映
             titleText.textContent = CONFIG.TITLE;
 
-            // 背景星の生成
-            initStars();
-
-            // イベント登録
+            initBubbles();
             setupEventListeners();
 
-            // リサイズ・画面向き判定
             resizeGame();
             window.addEventListener('resize', resizeGame);
             window.addEventListener('orientationchange', resizeGame);
 
-            // ループスタート
             requestAnimationFrame(gameLoop);
         });
 
-        // 背景星の初期化
-        function initStars() {
-            stars = [];
-            for (let i = 0; i < CONFIG.STAR_COUNT; i++) {
-                stars.push({
+        function initBubbles() {
+            bubbles = [];
+            for (let i = 0; i < CONFIG.BUBBLE_COUNT; i++) {
+                bubbles.push({
                     x: Math.random() * V_WIDTH,
                     y: Math.random() * V_HEIGHT,
-                    size: Math.random() * 2 + 1,
-                    speed: Math.random() * 80 + 20
+                    size: Math.random() * 3 + 2,
+                    speedX: Math.random() * 40 + 20,
+                    speedY: Math.random() * 30 + 10,
+                    wobble: Math.random() * Math.PI * 2
                 });
             }
         }
 
-        // ==========================================
-        // イベント ＆ タッチ座標変換
-        // ==========================================
         function setupEventListeners() {
-            // UIボタン
             document.getElementById('start-btn').addEventListener('click', startGame);
             document.getElementById('retry-btn').addEventListener('click', resetGame);
             document.getElementById('fullscreen-btn').addEventListener('click', toggleFullScreen);
 
-            // FIREボタン (ドラッグ移動と干渉しないよう独立処理)
             fireBtn.addEventListener('pointerdown', (e) => {
                 e.stopPropagation();
                 if (gameState === 'PLAYING') shootBullet();
             });
 
-            // キーボード (PC用 Spaceキー発射)
             window.addEventListener('keydown', (e) => {
                 if (e.code === 'Space') {
                     if (gameState === 'PLAYING') shootBullet();
@@ -360,7 +345,6 @@
                 }
             });
 
-            // 上下ドラッグ移動 ＆ 画面タップ発射
             const container = document.getElementById('game-container');
             let isPointerDown = false;
 
@@ -370,7 +354,6 @@
                 const pos = getGameCoordinates(e.clientX, e.clientY);
                 player.targetY = pos.y;
 
-                // FIREボタン以外へのタップでも弾を発射
                 if (e.target !== fireBtn) {
                     shootBullet();
                 }
@@ -389,7 +372,6 @@
             container.addEventListener('pointercancel', endPointer);
         }
 
-        // 画面座標 -> ゲーム固定解像度(960x540)への座標変換
         function getGameCoordinates(clientX, clientY) {
             const rect = canvas.getBoundingClientRect();
             const scaleX = V_WIDTH / rect.width;
@@ -400,13 +382,11 @@
             };
         }
 
-        // レスポンシブアスペクト比計算 & 縦横検知
         function resizeGame() {
             const container = document.getElementById('game-container');
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
 
-            // 縦画面判定
             if (windowWidth < windowHeight) {
                 portraitWarning.classList.remove('hidden');
                 isPaused = true;
@@ -415,7 +395,6 @@
                 isPaused = false;
             }
 
-            // 16:9維持のスケール処理
             let targetWidth = windowWidth;
             let targetHeight = windowWidth * (9 / 16);
 
@@ -428,7 +407,6 @@
             container.style.height = `${targetHeight}px`;
         }
 
-        // Fullscreen API 呼び出し
         function toggleFullScreen() {
             const container = document.getElementById('game-container');
             if (!document.fullscreenElement) {
@@ -446,9 +424,6 @@
             }
         }
 
-        // ==========================================
-        // ゲームステート管理
-        // ==========================================
         function startGame() {
             gameState = 'PLAYING';
             titleScreen.classList.add('hidden');
@@ -488,27 +463,34 @@
 
         function shootBullet() {
             bullets.push({
-                x: player.x + 20,
+                x: player.x + 25,
                 y: player.y,
-                radius: 5,
+                radius: 7,
                 speed: CONFIG.BULLET_SPEED
             });
         }
 
         function spawnEnemy() {
-            const size = Math.random() * 20 + 25; // 25~45px
+            const types = ['jellyfish', 'orca', 'shark'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            let radius = 24;
+            if (type === 'jellyfish') radius = 20;
+            if (type === 'orca') radius = 28;
+            if (type === 'shark') radius = 25;
+
             enemies.push({
-                x: V_WIDTH + size,
-                y: Math.random() * (V_HEIGHT - size * 2) + size,
-                radius: size / 2,
+                type: type,
+                x: V_WIDTH + radius + 10,
+                y: Math.random() * (V_HEIGHT - radius * 2 - 80) + radius + 20,
+                radius: radius,
                 speed: CONFIG.ENEMY_SPEED * (0.8 + Math.random() * 0.4)
             });
         }
 
         function createParticles(x, y, color) {
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < 14; i++) {
                 const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 180 + 40;
+                const speed = Math.random() * 160 + 30;
                 particles.push({
                     x: x,
                     y: y,
@@ -522,9 +504,6 @@
             }
         }
 
-        // ==========================================
-        // ゲームループ & 更新処理
-        // ==========================================
         function gameLoop(timestamp) {
             if (!lastTimestamp) lastTimestamp = timestamp;
             const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
@@ -539,30 +518,31 @@
         }
 
         function update(dt) {
-            // 背景星の移動
-            stars.forEach(star => {
-                star.x -= star.speed * dt;
-                if (star.x < 0) star.x = V_WIDTH;
+            bubbles.forEach(b => {
+                b.wobble += dt * 3;
+                b.x -= b.speedX * dt;
+                b.y -= Math.sin(b.wobble) * 15 * dt + b.speedY * dt;
+
+                if (b.x < -10 || b.y < -10) {
+                    b.x = V_WIDTH + 10;
+                    b.y = Math.random() * V_HEIGHT + 10;
+                }
             });
 
             if (gameState !== 'PLAYING') return;
 
-            // 生存時間更新
             gameTime += dt;
             timeVal.textContent = gameTime.toFixed(1);
 
-            // 自機の移動追従
-            player.targetY = Math.max(player.radius, Math.min(V_HEIGHT - player.radius, player.targetY));
+            player.targetY = Math.max(player.radius + 10, Math.min(V_HEIGHT - player.radius - 40, player.targetY));
             player.y += (player.targetY - player.y) * CONFIG.PLAYER_SMOOTH;
 
-            // 敵生成タイマー
             enemyTimer += dt;
             if (enemyTimer >= CONFIG.ENEMY_INTERVAL) {
                 spawnEnemy();
                 enemyTimer = 0;
             }
 
-            // 弾の移動 & 画面外消去
             for (let i = bullets.length - 1; i >= 0; i--) {
                 bullets[i].x += bullets[i].speed * dt;
                 if (bullets[i].x > V_WIDTH + 20) {
@@ -570,33 +550,33 @@
                 }
             }
 
-            // 敵の移動 & 当たり判定
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const enemy = enemies[i];
                 enemy.x -= enemy.speed * dt;
 
-                // 自機と敵の当たり判定
                 const distToPlayer = Math.hypot(enemy.x - player.x, enemy.y - player.y);
-                if (distToPlayer < enemy.radius + player.radius) {
-                    createParticles(player.x, player.y, CONFIG.PLAYER_COLOR);
-                    createParticles(enemy.x, enemy.y, CONFIG.ENEMY_COLOR);
+                if (distToPlayer < enemy.radius + player.radius - 5) {
+                    createParticles(player.x, player.y, "#80e5ff");
+                    createParticles(enemy.x, enemy.y, "#ffffff");
                     gameOver();
                     return;
                 }
 
-                // 画面外脱出
-                if (enemy.x < -enemy.radius) {
+                if (enemy.x < -enemy.radius - 20) {
                     enemies.splice(i, 1);
                     continue;
                 }
 
-                // 弾と敵の当たり判定
                 for (let j = bullets.length - 1; j >= 0; j--) {
                     const bullet = bullets[j];
                     const distToBullet = Math.hypot(enemy.x - bullet.x, enemy.y - bullet.y);
 
                     if (distToBullet < enemy.radius + bullet.radius) {
-                        createParticles(enemy.x, enemy.y, CONFIG.ENEMY_COLOR);
+                        let color = "#ff69b4";
+                        if (enemy.type === 'orca') color = "#1a1a24";
+                        if (enemy.type === 'shark') color = "#788e9c";
+
+                        createParticles(enemy.x, enemy.y, color);
                         enemies.splice(i, 1);
                         bullets.splice(j, 1);
                         hitCount++;
@@ -606,7 +586,6 @@
                 }
             }
 
-            // パーティクルの更新
             for (let i = particles.length - 1; i >= 0; i--) {
                 const p = particles[i];
                 p.x += p.vx * dt;
@@ -622,83 +601,333 @@
         // 描画処理 (Canvas)
         // ==========================================
         function draw() {
-            // 背景クリア
-            ctx.fillStyle = CONFIG.BG_COLOR;
+            // 背景（水色から暗い青色へシームレスにつながるなめらかなグラデーション）
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, V_HEIGHT);
+            bgGrad.addColorStop(0.0, "#00d2ff"); // 最上部（明るい水色）
+            bgGrad.addColorStop(0.35, "#0088fe"); // 水色から青へのなめらかな変化
+            bgGrad.addColorStop(0.7, "#003388");  // 深みのある青
+            bgGrad.addColorStop(1.0, "#001133");  // 最下部（暗い青色）
+            ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
 
-            // 星の描画
-            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-            stars.forEach(star => {
+            // サンゴと海底の描画
+            drawCorals();
+
+            // 背景の泡描画
+            bubbles.forEach(b => {
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+                ctx.lineWidth = 1.2;
                 ctx.beginPath();
-                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+                ctx.beginPath();
+                ctx.arc(b.x - b.size * 0.3, b.y - b.size * 0.3, b.size * 0.25, 0, Math.PI * 2);
                 ctx.fill();
             });
 
             if (gameState === 'TITLE') return;
 
-            // 弾の描画
-            ctx.fillStyle = CONFIG.BULLET_COLOR;
-            ctx.shadowColor = CONFIG.BULLET_COLOR;
-            ctx.shadowBlur = 10;
-            bullets.forEach(b => {
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
+            // 弾（真珠 Pearl）の描画
+            bullets.forEach(b => drawPearl(b.x, b.y, b.radius));
 
-            // 敵の描画 (六角形)
-            ctx.fillStyle = CONFIG.ENEMY_COLOR;
-            ctx.shadowColor = CONFIG.ENEMY_COLOR;
-            ctx.shadowBlur = 12;
+            // 敵キャラの描画 (クラゲ・シャチ・サメ)
             enemies.forEach(e => {
-                ctx.beginPath();
-                for (let i = 0; i < 6; i++) {
-                    const angle = (Math.PI / 3) * i;
-                    const x = e.x + e.radius * Math.cos(angle);
-                    const y = e.y + e.radius * Math.sin(angle);
-                    if (i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                }
-                ctx.closePath();
-                ctx.fill();
+                if (e.type === 'jellyfish') drawJellyfish(e.x, e.y, e.radius);
+                else if (e.type === 'orca') drawOrca(e.x, e.y, e.radius);
+                else if (e.type === 'shark') drawShark(e.x, e.y, e.radius);
             });
 
-            // 自機の描画 (宇宙船)
+            // プレイヤー（水色のイルカ）の描画
             if (gameState === 'PLAYING') {
-                // バーナーの炎
-                ctx.fillStyle = "#ffaa00";
-                ctx.beginPath();
-                ctx.moveTo(player.x - player.radius, player.y - 8);
-                ctx.lineTo(player.x - player.radius - (10 + Math.random() * 10), player.y);
-                ctx.lineTo(player.x - player.radius, player.y + 8);
-                ctx.closePath();
-                ctx.fill();
-
-                // 機体本体
-                ctx.fillStyle = CONFIG.PLAYER_COLOR;
-                ctx.shadowColor = CONFIG.PLAYER_COLOR;
-                ctx.shadowBlur = 15;
-                ctx.beginPath();
-                ctx.moveTo(player.x + player.radius + 5, player.y);
-                ctx.lineTo(player.x - player.radius, player.y - player.radius + 4);
-                ctx.lineTo(player.x - player.radius + 6, player.y);
-                ctx.lineTo(player.x - player.radius, player.y + player.radius - 4);
-                ctx.closePath();
-                ctx.fill();
+                drawDolphin(player.x, player.y, player.radius);
             }
 
             // パーティクルの描画
             particles.forEach(p => {
                 ctx.fillStyle = p.color;
-                ctx.shadowColor = p.color;
-                ctx.shadowBlur = 6;
                 ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
                 ctx.fill();
             });
             ctx.globalAlpha = 1.0;
-            ctx.shadowBlur = 0;
+        }
+
+        // ------------------------------------------
+        // サンゴ＆海底の描画関数
+        // ------------------------------------------
+        function drawCorals() {
+            // 海底の岩場シルエット
+            ctx.fillStyle = "#001a35";
+            ctx.beginPath();
+            ctx.moveTo(0, V_HEIGHT);
+            ctx.quadraticCurveTo(150, V_HEIGHT - 25, 300, V_HEIGHT - 10);
+            ctx.quadraticCurveTo(500, V_HEIGHT - 35, 700, V_HEIGHT - 15);
+            ctx.quadraticCurveTo(850, V_HEIGHT - 25, V_WIDTH, V_HEIGHT);
+            ctx.fill();
+
+            // カラフルなサンゴ群
+            drawCoralBranch(80, V_HEIGHT - 10, "#ff5252", 0.95);  // 赤系サンゴ
+            drawCoralBranch(220, V_HEIGHT - 15, "#ff9f43", 1.15); // オレンジ系サンゴ
+            drawCoralBranch(380, V_HEIGHT - 8, "#a55eea", 0.85);  // 紫系サンゴ
+            drawCoralBranch(560, V_HEIGHT - 20, "#ff78ae", 1.2);  // ピンク系サンゴ
+            drawCoralBranch(720, V_HEIGHT - 12, "#48dbfb", 0.9);  // 水色系サンゴ
+            drawCoralBranch(880, V_HEIGHT - 5, "#ff6b6b", 1.0);   // コーラルレッドサンゴ
+        }
+
+        // サンゴの枝描画（一本一本枝分かれするデザイン）
+        function drawCoralBranch(x, y, color, scale) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineCap = "round";
+
+            // メイン幹
+            ctx.lineWidth = 9;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.quadraticCurveTo(-5, -25, -10, -50);
+            ctx.stroke();
+
+            // 枝分岐
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(-7, -25);
+            ctx.quadraticCurveTo(-22, -40, -28, -58);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(-10, -50);
+            ctx.quadraticCurveTo(8, -62, 14, -76);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(-10, -50);
+            ctx.quadraticCurveTo(-20, -68, -24, -82);
+            ctx.stroke();
+
+            // サンゴの先端の丸み
+            const tips = [[-28, -58], [14, -76], [-24, -82], [-10, -50]];
+            tips.forEach(pt => {
+                ctx.beginPath();
+                ctx.arc(pt[0], pt[1], 4.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.restore();
+        }
+
+        // ------------------------------------------
+        // キャラクター描画関数
+        // ------------------------------------------
+
+        // 1. 水色のイルカ (Dolphin)
+        function drawDolphin(x, y, r) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            const bodyGrad = ctx.createLinearGradient(0, -r, 0, r);
+            bodyGrad.addColorStop(0, "#99ffff");
+            bodyGrad.addColorStop(0.5, "#00c8ff");
+            bodyGrad.addColorStop(1, "#e0ffff");
+
+            // 尾びれ
+            ctx.fillStyle = "#00bfff";
+            ctx.beginPath();
+            ctx.moveTo(-r * 0.8, 0);
+            ctx.quadraticCurveTo(-r * 1.5, -r * 0.8, -r * 1.6, -r * 0.7);
+            ctx.quadraticCurveTo(-r * 1.1, 0, -r * 1.6, r * 0.7);
+            ctx.quadraticCurveTo(-r * 1.5, r * 0.8, -r * 0.8, 0);
+            ctx.fill();
+
+            // 胴体 ＆ くちばし
+            ctx.fillStyle = bodyGrad;
+            ctx.beginPath();
+            ctx.moveTo(-r * 0.9, 0);
+            ctx.bezierCurveTo(-r * 0.5, -r * 0.9, r * 0.4, -r * 0.8, r * 0.9, -r * 0.2);
+            ctx.bezierCurveTo(r * 1.25, -r * 0.1, r * 1.25, r * 0.25, r * 0.85, r * 0.3);
+            ctx.bezierCurveTo(r * 0.3, r * 0.8, -r * 0.5, r * 0.7, -r * 0.9, 0);
+            ctx.fill();
+
+            // 背びれ
+            ctx.beginPath();
+            ctx.moveTo(-r * 0.1, -r * 0.65);
+            ctx.quadraticCurveTo(-r * 0.3, -r * 1.2, -r * 0.6, -r * 1.1);
+            ctx.quadraticCurveTo(-r * 0.4, -r * 0.6, -r * 0.4, -r * 0.5);
+            ctx.fill();
+
+            // 胸びれ
+            ctx.beginPath();
+            ctx.moveTo(r * 0.1, r * 0.2);
+            ctx.quadraticCurveTo(-r * 0.2, r * 0.8, -r * 0.5, r * 0.7);
+            ctx.quadraticCurveTo(-r * 0.1, r * 0.3, r * 0.1, r * 0.2);
+            ctx.fill();
+
+            // 目
+            ctx.fillStyle = "#002b49";
+            ctx.beginPath();
+            ctx.arc(r * 0.5, -r * 0.15, r * 0.14, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(r * 0.53, -r * 0.18, r * 0.06, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // 2. 真珠 (Pearl)
+        function drawPearl(x, y, r) {
+            ctx.save();
+            const pearlGrad = ctx.createRadialGradient(
+                x - r * 0.3, y - r * 0.3, r * 0.1,
+                x, y, r
+            );
+            pearlGrad.addColorStop(0, "#ffffff");
+            pearlGrad.addColorStop(0.4, "#fff0f5");
+            pearlGrad.addColorStop(0.8, "#e6e6fa");
+            pearlGrad.addColorStop(1, "#b0c4de");
+
+            ctx.fillStyle = pearlGrad;
+            ctx.shadowColor = "rgba(255, 255, 255, 0.9)";
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // 3. クラゲ (Jellyfish)
+        function drawJellyfish(x, y, r) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            const jGrad = ctx.createRadialGradient(0, -r * 0.2, r * 0.1, 0, 0, r);
+            jGrad.addColorStop(0, "rgba(255, 182, 193, 0.95)");
+            jGrad.addColorStop(0.7, "rgba(255, 105, 180, 0.85)");
+            jGrad.addColorStop(1, "rgba(218, 112, 214, 0.65)");
+            ctx.fillStyle = jGrad;
+
+            ctx.beginPath();
+            ctx.arc(0, 0, r, Math.PI, 0, false);
+            ctx.quadraticCurveTo(0, r * 0.3, -r, 0);
+            ctx.fill();
+
+            ctx.strokeStyle = "rgba(255, 182, 193, 0.85)";
+            ctx.lineWidth = 2.2;
+            const timeOffset = Date.now() * 0.006;
+            for (let i = -2; i <= 2; i++) {
+                const offsetX = i * (r * 0.38);
+                const wave = Math.sin(timeOffset + i) * 5;
+                ctx.beginPath();
+                ctx.moveTo(offsetX, 0);
+                ctx.quadraticCurveTo(offsetX + wave, r * 0.7, offsetX - wave, r * 1.3);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        // 4. シャチ (Orca)
+        function drawOrca(x, y, r) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(-1, 1);
+
+            ctx.fillStyle = "#161622";
+            ctx.beginPath();
+            ctx.moveTo(-r * 0.9, 0);
+            ctx.bezierCurveTo(-r * 0.5, -r * 0.9, r * 0.4, -r * 0.8, r * 0.9, -r * 0.2);
+            ctx.bezierCurveTo(r * 1.2, -r * 0.1, r * 1.1, r * 0.3, r * 0.7, r * 0.4);
+            ctx.bezierCurveTo(r * 0.2, r * 0.8, -r * 0.5, r * 0.7, -r * 0.9, 0);
+            ctx.fill();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.moveTo(-r * 0.3, r * 0.3);
+            ctx.quadraticCurveTo(r * 0.3, r * 0.5, r * 0.7, r * 0.2);
+            ctx.quadraticCurveTo(r * 0.2, r * 0.6, -r * 0.3, r * 0.3);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.ellipse(r * 0.35, -r * 0.22, r * 0.22, r * 0.1, Math.PI / 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#161622";
+            ctx.beginPath();
+            ctx.moveTo(-r * 0.1, -r * 0.6);
+            ctx.lineTo(-r * 0.3, -r * 1.35);
+            ctx.lineTo(-r * 0.6, -r * 0.5);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(-r * 0.8, 0);
+            ctx.lineTo(-r * 1.4, -r * 0.6);
+            ctx.lineTo(-r * 1.1, 0);
+            ctx.lineTo(-r * 1.4, r * 0.6);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // 5. サメ (Shark)
+        function drawShark(x, y, r) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(-1, 1);
+
+            const sharkGrad = ctx.createLinearGradient(0, -r, 0, r);
+            sharkGrad.addColorStop(0, "#4a586e");
+            sharkGrad.addColorStop(0.6, "#6c7a89");
+            sharkGrad.addColorStop(1, "#c8d6e5");
+
+            ctx.fillStyle = sharkGrad;
+            ctx.beginPath();
+            ctx.moveTo(-r * 1.0, 0);
+            ctx.bezierCurveTo(-r * 0.5, -r * 0.8, r * 0.5, -r * 0.7, r * 1.1, -r * 0.1);
+            ctx.bezierCurveTo(r * 1.2, 0, r * 1.0, r * 0.5, r * 0.5, r * 0.5);
+            ctx.bezierCurveTo(-r * 0.2, r * 0.6, -r * 0.6, r * 0.5, -r * 1.0, 0);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(0, -r * 0.55);
+            ctx.lineTo(-r * 0.25, -r * 1.2);
+            ctx.lineTo(-r * 0.55, -r * 0.45);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(-r * 0.9, 0);
+            ctx.lineTo(-r * 1.45, -r * 0.75);
+            ctx.lineTo(-r * 1.15, 0);
+            ctx.lineTo(-r * 1.35, r * 0.55);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = "#ffcc00";
+            ctx.beginPath();
+            ctx.arc(r * 0.6, -r * 0.15, r * 0.12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#000000";
+            ctx.beginPath();
+            ctx.arc(r * 0.6, -r * 0.15, r * 0.06, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = "#2f3640";
+            ctx.lineWidth = 1.5;
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.arc(r * (0.1 - i * 0.12), 0, r * 0.22, -Math.PI * 0.3, Math.PI * 0.3);
+                ctx.stroke();
+            }
+
+            ctx.restore();
         }
     </script>
 </body>
