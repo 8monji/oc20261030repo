@@ -1,1 +1,260 @@
-none
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#091327">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>MY SHOOTING GAME</title>
+  <style>
+    * { box-sizing: border-box; }
+    html,body { margin:0; width:100%; height:100%; overflow:hidden; background:#091327; }
+    body { color:white; font-family:system-ui,-apple-system,'Noto Sans JP',sans-serif; touch-action:none; user-select:none; -webkit-user-select:none; }
+    #stage { position:fixed; inset:0; overflow:hidden; background:#091327; }
+    canvas { width:100%; height:100%; display:block; touch-action:none; }
+    .overlay { position:absolute; inset:0; z-index:5; display:grid; place-items:center; padding:12px;
+      background:rgba(3,9,27,.74); backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); }
+    .panel { width:min(580px,94vw); border:1px solid rgba(50,234,254,.55); border-radius:22px;
+      padding:22px 25px; background:linear-gradient(135deg,rgba(10,22,54,.97),rgba(26,11,45,.93));
+      box-shadow:0 12px 60px #0009, inset 0 0 40px #1bb5e510; text-align:center; }
+    .eyebrow { color:#67e8fa; font-size:12px; letter-spacing:.3em; font-weight:800; }
+    h1 { color:white; font-size:clamp(27px,5vw,42px); letter-spacing:.06em; line-height:1.08;
+      margin:10px auto 12px; text-shadow:0 0 16px #25def56b, 0 0 35px #ff53c433; }
+    .sub { color:#c4d5f4; font-size:clamp(12px,2vw,16px); margin:0 0 15px; line-height:1.6; }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:15px; }
+    .chip { border:1px solid #ffffff30; border-radius:99px; padding:6px 10px; font-size:12px; color:#dfedfd; }
+    button { border:0; border-radius:12px; cursor:pointer; font-weight:900; }
+    #playButton { color:#051b26; background:#55f7db; font-size:17px; min-width:155px; padding:12px 28px; box-shadow:0 0 26px #39fadc4a; }
+    #fullscreenButton { color:white; border:1px solid #7791b5; background:#34476b; margin-left:9px; padding:12px 16px; }
+    #fireButton { display:none; position:absolute; right:max(22px,env(safe-area-inset-right));
+      bottom:max(22px,env(safe-area-inset-bottom)); width:86px; height:86px; z-index:3;
+      color:#260920; font-size:18px; border:4px solid #ffe0f7; border-radius:50%;
+      background:linear-gradient(140deg,#ff9be4,#ff4aaf); box-shadow:0 0 26px #ff36ac80; touch-action:none; }
+    #fireButton:active { transform:scale(.95); }
+    #rotate { display:none; z-index:10; }
+    #rotate h1 { font-size:27px; }
+    .hint { font-size:11px; color:#89a1c8; margin-top:13px; }
+    @media (max-height:410px) { .panel { padding:10px 18px; } h1 { margin:4px 0; font-size:26px; } .chips { margin-bottom:8px; } }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="screen" aria-label="横スクロールシューティングゲーム"></canvas>
+    <button id="fireButton" aria-label="弾を発射">FIRE</button>
+    <div class="overlay" id="menu">
+      <div class="panel">
+        <div class="eyebrow">OPEN CAMPUS • YOUR ORIGINAL GAME</div>
+        <h1 id="gameTitle">MY SHOOTING GAME</h1>
+        <p class="sub" id="message">上下ドラッグで移動して、タップで弾を発射！<br>敵を撃破しながら進もう。</p>
+        <div class="chips"><span class="chip">DRAG : MOVE</span><span class="chip">TAP / FIRE : SHOOT</span><span class="chip">PC : SPACE</span></div>
+        <button id="playButton">PLAY</button><button id="fullscreenButton">FULL SCREEN</button>
+        <div class="hint">スマホは横向きでプレイしてください</div>
+      </div>
+    </div>
+    <div class="overlay" id="rotate"><div class="panel"><div class="eyebrow">LANDSCAPE MODE</div>
+      <h1>スマホを横にしてね ↻</h1><p class="sub">横画面で遊べるゲームです。<br>縦画面の間は自動で一時停止します。</p></div></div>
+  </div>
+  <script>
+  (() => {
+    'use strict';
+    // ===== 体験授業で変更しやすい設定 =====
+    const CONFIG = {
+      title: 'MY SHOOTING GAME',
+      worldW: 960, worldH: 540,
+      bgColor: '#091327', skyColor: '#173368',
+      playerColor: '#4cf5da', enemyColor: '#ff5cbd', bulletColor: '#ffe67a',
+      playerImage: '',   // 例: 'player.png'。利用時はHTMLと一緒にアップロード
+      backgroundImage: '', // 例: 'background.jpg'。利用時はHTMLと一緒にアップロード
+      enemySpeed: 240, enemyIntervalMin: 0.85, enemyIntervalMax: 1.45,
+      bulletSpeed: 680, shotCooldown: 0.20, follow: 19,
+      playPadTop: 75, playPadBottom: 75
+    };
+    document.title = CONFIG.title;
+    document.getElementById('gameTitle').textContent = CONFIG.title;
+    const stage=document.getElementById('stage'),canvas=document.getElementById('screen');
+    const ctx=canvas.getContext('2d');
+    const menu=document.getElementById('menu'),rotate=document.getElementById('rotate');
+    const playButton=document.getElementById('playButton'),fireButton=document.getElementById('fireButton');
+    const message=document.getElementById('message'),fs=document.getElementById('fullscreenButton');
+    const world={w:CONFIG.worldW,h:CONFIG.worldH},view={scale:1,x:0,y:0};
+    let dpr=1,screenW=0,screenH=0,mode='title',lastT=0,elapsed=0,kills=0,spawnTimer=0,shotTimer=0;
+    const player={x:148,y:235,w:60,h:48,targetY:235};
+    const bullets=[],enemies=[],sparks=[];
+    let activePointer=null,startPointerY=0,moved=false;
+    const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+    const rand=(lo,hi)=>lo+Math.random()*(hi-lo);
+    const top=()=>CONFIG.playPadTop, bottom=()=>world.h-CONFIG.playPadBottom;
+    const playerAsset=new Image(),bgAsset=new Image();
+    let playerReady=false,bgReady=false;
+    if(CONFIG.playerImage){playerAsset.onload=()=>playerReady=true;playerAsset.src=CONFIG.playerImage;}
+    if(CONFIG.backgroundImage){bgAsset.onload=()=>bgReady=true;bgAsset.src=CONFIG.backgroundImage;}
+
+    function resize(){
+      const rect=stage.getBoundingClientRect();
+      screenW=rect.width; screenH=rect.height;
+      dpr=Math.min(window.devicePixelRatio||1,2);
+      canvas.width=Math.max(1,Math.round(screenW*dpr));canvas.height=Math.max(1,Math.round(screenH*dpr));
+      view.scale=Math.min(screenW/world.w,screenH/world.h);
+      view.x=(screenW-world.w*view.scale)/2;view.y=(screenH-world.h*view.scale)/2;
+    }
+    function landscape(){return window.innerWidth>=window.innerHeight;}
+    function updateRotate(){
+      const portrait=!landscape();rotate.style.display=portrait?'grid':'none';
+      if(portrait&&mode==='running')pause();
+    }
+    function showMenu(label,text){
+      menu.style.display='grid';fireButton.style.display='none';
+      playButton.textContent=label;message.innerHTML=text;
+    }
+    function reset(){
+      elapsed=0;kills=0;spawnTimer=1.0;shotTimer=0;lastT=0;
+      bullets.length=0;enemies.length=0;sparks.length=0;
+      player.x=148;player.y=(world.h-player.h)/2;player.targetY=player.y;
+      activePointer=null;
+    }
+    function start(){
+      if(!landscape())return;
+      if(mode!=='paused')reset();
+      mode='running';menu.style.display='none';fireButton.style.display='block';
+      lastT=0;
+    }
+    function pause(){
+      if(mode!=='running')return;
+      mode='paused';showMenu('RESUME','ゲームを一時停止しました。');
+    }
+    function gameOver(){
+      if(mode!=='running')return;
+      mode='gameover';
+      showMenu('RETRY',`GAME OVER<br>TIME: <b>${elapsed.toFixed(1)}秒</b>　/　撃破: <b>${kills}</b>`);
+      if(navigator.vibrate)try{navigator.vibrate(60);}catch(e){}
+    }
+    function shoot(){
+      if(mode!=='running'||shotTimer>0)return;
+      bullets.push({x:player.x+player.w-4,y:player.y+player.h/2-4,w:22,h:8});
+      shotTimer=CONFIG.shotCooldown;
+    }
+    function spawn(){
+      const w=rand(37,63),h=rand(36,64);
+      enemies.push({x:world.w+30,y:rand(top()+5,bottom()-h-5),w,h,phase:rand(0,6.28)});
+    }
+    function collide(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
+    function explode(x,y){for(let k=0;k<10;k++)sparks.push({x,y,vx:rand(-110,110),vy:rand(-110,110),life:rand(.15,.4)});}
+    function inputY(clientY){
+      const cy=clientY-stage.getBoundingClientRect().top;
+      return(clamp((cy-view.y)/view.scale-player.h/2,top(),bottom()-player.h));
+    }
+    canvas.addEventListener('pointerdown',e=>{
+      if(mode!=='running'||activePointer!==null)return;
+      e.preventDefault();activePointer=e.pointerId;startPointerY=e.clientY;moved=false;
+      player.targetY=inputY(e.clientY);
+      try{canvas.setPointerCapture(e.pointerId);}catch(err){}
+    });
+    canvas.addEventListener('pointermove',e=>{
+      if(e.pointerId!==activePointer||mode!=='running')return;
+      e.preventDefault();
+      if(Math.abs(e.clientY-startPointerY)>10)moved=true;
+      player.targetY=inputY(e.clientY);
+    });
+    function inputEnd(e){
+      if(e.pointerId!==activePointer)return;
+      if(!moved&&e.type==='pointerup')shoot();
+      activePointer=null;
+    }
+    canvas.addEventListener('pointerup',inputEnd);
+    canvas.addEventListener('pointercancel',inputEnd);
+    fireButton.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();shoot();});
+    document.addEventListener('keydown',e=>{
+      if(e.code==='Space'){e.preventDefault();if(!e.repeat)shoot();}
+      if(e.code==='ArrowUp')player.targetY=clamp(player.targetY-28,top(),bottom()-player.h);
+      if(e.code==='ArrowDown')player.targetY=clamp(player.targetY+28,top(),bottom()-player.h);
+    });
+    playButton.addEventListener('click',start);
+    const canFs=()=>!!(document.fullscreenEnabled&&stage.requestFullscreen);
+    fs.style.display=canFs()?'inline-block':'none';
+    fs.addEventListener('click',()=>{if(canFs())stage.requestFullscreen({navigationUI:'hide'}).catch(()=>{});});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
+    window.addEventListener('resize',()=>{resize();updateRotate();});
+
+    function update(dt){
+      elapsed+=dt;shotTimer=Math.max(0,shotTimer-dt);
+      player.y+=(player.targetY-player.y)*Math.min(1,CONFIG.follow*dt);
+      player.y=clamp(player.y,top(),bottom()-player.h);
+      spawnTimer-=dt;
+      if(spawnTimer<=0){spawn();spawnTimer=rand(CONFIG.enemyIntervalMin,CONFIG.enemyIntervalMax);}
+      for(let i=bullets.length-1;i>=0;i--){
+        const b=bullets[i];b.x+=CONFIG.bulletSpeed*dt;
+        if(b.x>world.w+20)bullets.splice(i,1);
+      }
+      for(let i=enemies.length-1;i>=0;i--){
+        const a=enemies[i];a.x-=(CONFIG.enemySpeed+Math.min(100,elapsed*3))*dt;
+        if(a.x+a.w<-10){enemies.splice(i,1);continue;}
+        for(let j=bullets.length-1;j>=0;j--){
+          if(collide(a,bullets[j])){explode(a.x+a.w/2,a.y+a.h/2);enemies.splice(i,1);bullets.splice(j,1);kills++;break;}
+        }
+      }
+      for(let i=sparks.length-1;i>=0;i--){
+        const p=sparks[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
+        if(p.life<=0)sparks.splice(i,1);
+      }
+      for(const a of enemies){
+        if(collide({x:player.x+10,y:player.y+9,w:player.w-20,h:player.h-18},
+          {x:a.x+6,y:a.y+5,w:a.w-12,h:a.h-10})){gameOver();break;}
+      }
+    }
+    function bg(){
+      if(bgReady){ctx.drawImage(bgAsset,0,0,world.w,world.h);ctx.fillStyle='#06122b55';ctx.fillRect(0,0,world.w,world.h);return;}
+      const grad=ctx.createLinearGradient(0,0,0,world.h);
+      grad.addColorStop(0,CONFIG.bgColor);grad.addColorStop(1,CONFIG.skyColor);
+      ctx.fillStyle=grad;ctx.fillRect(0,0,world.w,world.h);
+      ctx.fillStyle='#7aeaff44';
+      for(let i=0;i<65;i++){
+        const x=((i*167.63-elapsed*(15+i%4*13))%1000+1000)%1000;
+        const y=(i*79.1)%world.h;
+        ctx.fillRect(x,y,2+(i%3),1.5);
+      }
+      ctx.strokeStyle='#21e6e71c';ctx.lineWidth=1;
+      for(let y=top();y<=bottom();y+=44){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(world.w,y);ctx.stroke();}
+      ctx.strokeStyle='#52e5e880';ctx.lineWidth=2;
+      for(const y of [top(),bottom()]){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(world.w,y);ctx.stroke();}
+    }
+    function drawPlayer(){
+      const {x,y,w,h}=player;
+      if(playerReady){ctx.drawImage(playerAsset,x,y,w,h);return;}
+      ctx.save();ctx.shadowColor=CONFIG.playerColor;ctx.shadowBlur=21;
+      ctx.fillStyle=CONFIG.playerColor;
+      ctx.beginPath();ctx.moveTo(x+w,y+h/2);ctx.lineTo(x+10,y+3);ctx.lineTo(x+20,y+h/2);ctx.lineTo(x+10,y+h-3);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#ffffff';ctx.fillRect(x+27,y+h/2-5,13,10);
+      ctx.fillStyle='#6aeafc';ctx.fillRect(x-16,y+h/2-8,23,16);
+      ctx.restore();
+    }
+    function draw(){
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.fillStyle='#020818';ctx.fillRect(0,0,screenW,screenH);
+      ctx.save();ctx.translate(view.x,view.y);ctx.scale(view.scale,view.scale);
+      ctx.beginPath();ctx.rect(0,0,world.w,world.h);ctx.clip();
+      bg();drawPlayer();
+      for(const a of enemies){
+        ctx.save();ctx.shadowColor=CONFIG.enemyColor;ctx.shadowBlur=14;
+        ctx.fillStyle=CONFIG.enemyColor;ctx.beginPath();
+        ctx.moveTo(a.x,a.y+a.h/2);ctx.lineTo(a.x+a.w*.8,a.y);ctx.lineTo(a.x+a.w,a.y+a.h/2);
+        ctx.lineTo(a.x+a.w*.8,a.y+a.h);ctx.closePath();ctx.fill();ctx.restore();
+      }
+      ctx.save();ctx.fillStyle=CONFIG.bulletColor;ctx.shadowColor=CONFIG.bulletColor;ctx.shadowBlur=15;
+      for(const b of bullets){ctx.fillRect(b.x,b.y,b.w,b.h);}ctx.restore();
+      ctx.fillStyle='#ffe67a';for(const p of sparks){ctx.globalAlpha=clamp(p.life*3,0,1);ctx.fillRect(p.x,p.y,4,4);}ctx.globalAlpha=1;
+      ctx.fillStyle='#000a22b8';ctx.fillRect(14,13,267,46);
+      ctx.fillStyle='#fff';ctx.font='bold 20px system-ui';
+      ctx.fillText('TIME '+elapsed.toFixed(1)+'s   HIT '+kills,26,43);
+      ctx.restore();
+    }
+    function tick(t){
+      const dt=lastT?Math.min((t-lastT)/1000,.035):0;lastT=t;
+      if(mode==='running'&&landscape())update(dt);
+      draw();requestAnimationFrame(tick);
+    }
+    resize();updateRotate();requestAnimationFrame(tick);
+  })();
+  </script>
+</body>
+</html>
